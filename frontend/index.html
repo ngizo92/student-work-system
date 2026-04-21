@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Work System</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="center">
+
+    <div class="form-card">
+
+        <h2>📘 Student Work System</h2>
+        <p style="text-align:center; margin-bottom:20px;">
+            Welcome! Choose how to login
+        </p>
+
+        <!-- TEACHER LOGIN -->
+        <button onclick="goTeacherLogin()" class="btn-blue">
+            👨‍🏫 Login as Teacher
+        </button>
+
+        <!-- STUDENT LOGIN -->
+        <button onclick="goStudentLogin()" class="btn-green">
+            👨‍🎓 Login as Student
+        </button>
+          <!-- your form fields here -->
+
+  
+</form>
+
+<p style="margin-top: 10px;">
+  Don't have an account?
+  <a href="teacher-register.html">Create TR account</a>
+</p>
+
+    </div>
+
+</div>
+
+<script>
+function goTeacherLogin() {
+    window.location.href = "teacher-login.html";
+}
+
+function goStudentLogin() {
+    window.location.href = "student-login.html";
+}
+</script>
+<input type="file" id="tFile">
+
+</body>
+</html>

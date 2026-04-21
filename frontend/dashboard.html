@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Teacher Dashboard</title>
+<link rel="stylesheet" href="style.css">
+
+<!-- PROTECT PAGE -->
+<script>
+   
+const role = localStorage.getItem("userRole");
+
+if (role !== "teacher") {
+    window.location.href = "index.html";
+}
+
+</script>
+
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- ================= SIDEBAR ================= -->
+    <div class="sidebar">
+
+        <h2>📘 EduSystem</h2>
+
+        <a href="#">🏠 Dashboard</a>
+        <a href="#" onclick="showStudentsSection()">👨‍🎓 Students</a>
+    <a href="#" onclick="openFilePicker()">📤 Assign Work</a>
+    </a>
+</label>
+        <a href="#">📊 Performance</a>
+
+        <button onclick="logout()" class="logout-btn">
+            🚪 Logout
+        </button>
+
+    </div>
+
+    <!-- ================= MAIN ================= -->
+    <div class="main">
+
+        <!-- TOP BAR -->
+        <div class="topbar">
+            <h2>Teacher Dashboard</h2>
+        </div>
+
+        <!-- ================= STUDENTS ================= -->
+        <div class="section">
+
+            <div class="section-header">
+                <h2>👨‍🎓 Students</h2>
+
+                <button class="add-btn" onclick="openStudentForm()">
+                    ➕ Add Student
+                </button>
+            </div>
+
+            <div id="studentList"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= MODAL ================= -->
+<div id="studentModal" class="modal">
+
+    <div class="modal-box">
+
+        <h2>Add Student</h2>
+
+     <input id="sName" placeholder="Full Name">
+<input id="sEmail" placeholder="Email">
+<input id="sClass" placeholder="Class">
+<input id="sSubject" placeholder="Subject">
+<input id="sPassword" type="password" placeholder="Password">
+
+<button onclick="createStudent()">Enter</button>
+
+    </div>
+    <div class="section">
+    <h2>📚 Create Assignment</h2>
+
+    <input id="title" placeholder="Title">
+    <textarea id="desc" placeholder="Description"></textarea>
+
+    <button onclick="createAssignment()">Create</button>
+</div>
+
+<div class="section">
+    <h2>📝 Submissions</h2>
+    <div id="submissions"></div>
+</div>
+
+</div>
+<div class="section">
+    <h2>📚 Assign Work</h2>
+
+    <input id="tTitle" placeholder="Title">
+    <textarea id="tDesc" placeholder="Description" oninput="saveWrittenWork(this.value)"></textarea>
+    <input id="tClass" placeholder="Class">
+    <input id="tSubject" placeholder="Subject">
+
+    <!-- ✅ PUT FILE INPUT HERE -->
+    <input type="file" id="tFile">
+
+    <button onclick="createTask()">Upload & Assign</button>
+</div>
+<div id="taskOptions" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000000aa; justify-content:center; align-items:center;">
+    
+    <div style="background:white; padding:20px; border-radius:10px; width:300px; text-align:center;">
+
+        <h3>Choose Assignment Type</h3>
+
+        <button onclick="chooseFileMode()">📁 Upload File</button>
+        <button onclick="chooseWriteMode()">✍️ Write Work</button>
+
+        <br><br>
+
+        <div id="fileBox" style="display:none;">
+            <input type="file" id="tFile">
+        </div>
+
+        <div id="writeBox" style="display:none;">
+            <textarea id="writeArea" style="width:100%; height:150px;"></textarea>
+        </div>
+
+        <br>
+
+        <button onclick="createTask()">Send</button>
+        <button onclick="closeTaskModal()">Cancel</button>
+
+    </div>
+</div>
+<script src="script.js"></script>
+
+
+<div id="taskModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center;">
+
+<div style="
+    background:white;
+    width:420px;
+    padding:20px;
+    border-radius:12px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+">
+
+<h2>📚 Assign Work</h2>
+
+<input id="tTitle" placeholder="Title" style="width:100%; padding:8px; margin:5px;">
+<textarea id="tDesc" placeholder="Description" style="width:100%; padding:8px; margin:5px;"></textarea>
+<input id="tClass" placeholder="Class" style="width:100%; padding:8px; margin:5px;">
+<input id="tSubject" placeholder="Subject" style="width:100%; padding:8px; margin:5px;">
+
+<hr>
+
+<!-- ONLY TWO ACTION BUTTONS -->
+<button onclick="openFileMode()" style="background:#2a5298; color:white; padding:10px; width:48%;">
+📁 File
+</button>
+
+<button onclick="openWriteMode()" style="background:#1e3c72; color:white; padding:10px; width:48%;">
+✍️ Write
+</button>
+
+</div>
+</div>
+<div id="writePage" style="display:none; position:fixed; inset:0; background:white; flex-direction:column;">
+
+<!-- TOP BAR -->
+<div style="background:#1e3c72; color:white; padding:10px;">
+    <b>✍️ Writing Mode</b>
+    <button onclick="closeWrite()" style="float:right; background:red; color:white;">X</button>
+</div>
+
+<!-- TEXT AREA -->
+<textarea id="writeArea" style="
+    flex:1;
+    width:100%;
+    border:none;
+    outline:none;
+    padding:20px;
+    font-size:16px;
+    color:black;
+"></textarea>
+
+<!-- SEND BUTTON -->
+<button onclick="sendWrittenTask()" style="
+    background:green;
+    color:white;
+    padding:15px;
+    width:100%;
+">
+Send Work
+</button>
+
+</div>
+
+</body>
+</html>
