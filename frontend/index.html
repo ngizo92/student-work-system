@@ -1,55 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Student Work System</title>
-<link rel="stylesheet" href="style.css">
+  <title>STUDENT-WORK-SYSTEM</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="center">
+<div class="container">
 
-    <div class="form-card">
+  <h1>STUDENT-WORK-SYSTEM</h1>
 
-        <h2>📘 Student Work System</h2>
-        <p style="text-align:center; margin-bottom:20px;">
-            Welcome! Choose how to login
-        </p>
+  <!-- STUDENT LOGIN -->
+  <div class="card">
+    <h2>Student Login</h2>
+    <input id="student_email" placeholder="Email">
+    <input id="student_password" type="password" placeholder="Password">
+    <button onclick="studentLogin()">Login as Student</button>
+  </div>
 
-        <!-- TEACHER LOGIN -->
-        <button onclick="goTeacherLogin()" class="btn-blue">
-            👨‍🏫 Login as Teacher
-        </button>
+  <!-- TEACHER LOGIN -->
+  <div class="card">
+    <h2>Teacher Login</h2>
+    <input id="teacher_email" placeholder="Email">
+    <input id="teacher_password" type="password" placeholder="Password">
+    <button onclick="teacherLogin()">Login as Teacher</button>
+  </div>
 
-        <!-- STUDENT LOGIN -->
-        <button onclick="goStudentLogin()" class="btn-green">
-            👨‍🎓 Login as Student
-        </button>
-          <!-- your form fields here -->
-
-  
-</form>
-
-<p style="margin-top: 10px;">
-  Don't have an account?
-  <a href="teacher-register.html">Create TR account</a>
-</p>
-
-    </div>
+  <!-- CREATE TEACHER -->
+  <button class="primary" onclick="openPopup()">
+    Create Teacher Account
+  </button>
 
 </div>
 
-<script>
-function goTeacherLogin() {
-    window.location.href = "teacher-login.html";
-}
+<!-- POPUP -->
+<div id="teacherPopup" class="popup">
+  <div class="popup-box">
 
-function goStudentLogin() {
-    window.location.href = "student-login.html";
-}
-</script>
-<input type="file" id="tFile">
+    <h2>Create Teacher Account</h2>
 
+    <input id="t_name" placeholder="Name">
+    <input id="t_email_reg" placeholder="Email">
+    <input id="t_password_reg" type="password" placeholder="Password">
+
+    <button onclick="createTeacher()">Create</button>
+    <button onclick="closePopup()">Close</button>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>

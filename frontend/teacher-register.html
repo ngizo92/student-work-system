@@ -1,167 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Teacher Register</title>
-
-<style>
-body {
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: Arial;
-    background: linear-gradient(-45deg, #4facfe, #00f2fe, #43e97b, #38f9d7);
-    background-size: 400% 400%;
-    animation: gradient 10s ease infinite;
-}
-
-@keyframes gradient {
-    0% {background-position: 0% 50%;}
-    50% {background-position: 100% 50%;}
-    100% {background-position: 0% 50%;}
-}
-
-.card {
-    width: 360px;
-    padding: 30px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    text-align: center;
-    color: white;
-    transition: 0.3s;
-}
-
-.card:hover {
-    transform: scale(1.02);
-}
-
-h2 {
-    margin-bottom: 10px;
-}
-
-p {
-    font-size: 13px;
-    opacity: 0.8;
-    margin-bottom: 20px;
-}
-
-input {
-    width: 90%;
-    padding: 12px;
-    margin: 10px 0;
-    border: none;
-    border-radius: 10px;
-    outline: none;
-    transition: 0.3s;
-}
-
-input:focus {
-    transform: scale(1.03);
-}
-
-button {
-    width: 95%;
-    padding: 12px;
-    margin-top: 15px;
-    border: none;
-    border-radius: 10px;
-    background: #fff;
-    color: #333;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-button:hover {
-    background: #000;
-    color: white;
-    transform: scale(1.05);
-}
-
-.link {
-    margin-top: 15px;
-    font-size: 13px;
-}
-
-.link a {
-    color: yellow;
-    text-decoration: none;
-}
-
-.loader {
-    display: none;
-    margin-top: 10px;
-    font-size: 12px;
-}
-</style>
+    <title>Teacher Register</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div class="card">
+<div class="auth-container">
+    <div class="card">
+       <h2>Create TR Account</h2>
 
-    <h2>👨‍🏫 Teacher Registration</h2>
-    <p>Create your teacher account to access dashboard</p>
+<form id="registerForm">
+    <input type="text" id="name" placeholder="Name" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
 
-    <input id="email" placeholder="Enter Email">
-    <input id="password" type="password" placeholder="Enter Password">
+    <button type="submit">Create Account</button>
+</form>
 
-    <button onclick="register()">Create Account</button>
-
-    <div class="loader" id="loader">Creating account...</div>
-
-    <div class="link">
-        Already have an account?
-        <a href="teacher-login.html">Login here</a>
+<a href="teacher-login.html">Already have account? Login</a>
     </div>
-
 </div>
 
-<script>
-const API = "http://localhost:5000";
-
-async function register() {
-
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const loader = document.getElementById("loader");
-
-    if (!email || !password) {
-        alert("Please fill all fields");
-        return;
-    }
-
-    loader.style.display = "block";
-
-    try {
-        const res = await fetch(`${API}/api/teacher/register`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email, password })
-        });
-
-        const data = await res.json();
-
-        loader.style.display = "none";
-
-        alert(data.message);
-
-        if (data.success) {
-            window.location.href = "teacher-login.html";
-        }
-
-    } catch (err) {
-        loader.style.display = "none";
-        alert("Server error");
-    }
-}
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>

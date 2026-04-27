@@ -1,206 +1,396 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <title>Teacher Dashboard</title>
-<link rel="stylesheet" href="style.css">
 
-<!-- PROTECT PAGE -->
-<script>
-   
-const role = localStorage.getItem("userRole");
-
-if (role !== "teacher") {
-    window.location.href = "index.html";
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f6fb;
+    display: flex;
 }
 
-</script>
+/* SIDEBAR */
+.nav {
+    width: 220px;
+    height: 100vh;
+    background: linear-gradient(180deg, #1e3c72, #2a5298);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
 
+.nav h3 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.nav button {
+    background: white;
+    color: #1e3c72;
+    border: none;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.nav button:hover {
+    background: #ddd;
+}
+
+/* MAIN */
+.container {
+    flex: 1;
+    padding: 25px;
+}
+
+/* FORM */
+form {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+input, textarea {
+    padding: 10px;
+    margin: 5px;
+    width: 220px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+button {
+    padding: 10px;
+    margin: 5px;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background: #2a5298;
+    color: white;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* TASK GRID */
+#tasks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+/* TASK CARD */
+.task-card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 5px solid #2a5298;
+    transition: 0.3s;
+}
+
+.task-card:hover {
+    transform: translateY(-5px);
+}
+
+.task-card h4 {
+    margin: 0;
+    color: #1e3c72;
+}
+
+.task-card p {
+    color: #555;
+    font-size: 14px;
+}
+
+/* DONE BUTTON */
+.done-btn {
+    margin-top: 10px;
+    background: green;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background: white;
+    width: 400px;
+    margin: 100px auto;
+    padding: 20px;
+    border-radius: 10px;
+}
+</style>
 </head>
 
 <body>
 
-<div class="app">
-
-    <!-- ================= SIDEBAR ================= -->
-    <div class="sidebar">
-
-        <h2>📘 EduSystem</h2>
-
-        <a href="#">🏠 Dashboard</a>
-        <a href="#" onclick="showStudentsSection()">👨‍🎓 Students</a>
-    <a href="#" onclick="openFilePicker()">📤 Assign Work</a>
-    </a>
-</label>
-        <a href="#">📊 Performance</a>
-
-        <button onclick="logout()" class="logout-btn">
-            🚪 Logout
-        </button>
-
-    </div>
-
-    <!-- ================= MAIN ================= -->
-    <div class="main">
-
-        <!-- TOP BAR -->
-        <div class="topbar">
-            <h2>Teacher Dashboard</h2>
-        </div>
-
-        <!-- ================= STUDENTS ================= -->
-        <div class="section">
-
-            <div class="section-header">
-                <h2>👨‍🎓 Students</h2>
-
-                <button class="add-btn" onclick="openStudentForm()">
-                    ➕ Add Student
-                </button>
-            </div>
-
-            <div id="studentList"></div>
-
-        </div>
-
-    </div>
-
+<!-- SIDEBAR -->
+<div class="nav">
+    <h3>Teacher Panel</h3>
+    <button onclick="logout()">Logout</button>
 </div>
 
-<!-- ================= MODAL ================= -->
-<div id="studentModal" class="modal">
+<!-- MAIN -->
+<div class="container">
 
-    <div class="modal-box">
+<h3>Create Task</h3>
 
-        <h2>Add Student</h2>
+<form id="taskForm">
+  <input type="text" id="title" placeholder="Title" required />
+  <textarea id="description" placeholder="Description"></textarea>
 
-     <input id="sName" placeholder="Full Name">
-<input id="sEmail" placeholder="Email">
-<input id="sClass" placeholder="Class">
-<input id="sSubject" placeholder="Subject">
-<input id="sPassword" type="password" placeholder="Password">
+  <input type="text" id="class" placeholder="Class" required />
+  <input type="text" id="subject" placeholder="Subject" required />
 
-<button onclick="createStudent()">Enter</button>
+  <input type="file" id="file" />
 
-    </div>
-    <div class="section">
-    <h2>📚 Create Assignment</h2>
+  <button type="submit">Assign Task</button>
+</form>
 
-    <input id="title" placeholder="Title">
-    <textarea id="desc" placeholder="Description"></textarea>
-
-    <button onclick="createAssignment()">Create</button>
-</div>
-
-<div class="section">
-    <h2>📝 Submissions</h2>
-    <div id="submissions"></div>
-</div>
-
-</div>
-<div class="section">
-    <h2>📚 Assign Work</h2>
-
-    <input id="tTitle" placeholder="Title">
-    <textarea id="tDesc" placeholder="Description" oninput="saveWrittenWork(this.value)"></textarea>
-    <input id="tClass" placeholder="Class">
-    <input id="tSubject" placeholder="Subject">
-
-    <!-- ✅ PUT FILE INPUT HERE -->
-    <input type="file" id="tFile">
-
-    <button onclick="createTask()">Upload & Assign</button>
-</div>
-<div id="taskOptions" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000000aa; justify-content:center; align-items:center;">
-    
-    <div style="background:white; padding:20px; border-radius:10px; width:300px; text-align:center;">
-
-        <h3>Choose Assignment Type</h3>
-
-        <button onclick="chooseFileMode()">📁 Upload File</button>
-        <button onclick="chooseWriteMode()">✍️ Write Work</button>
-
-        <br><br>
-
-        <div id="fileBox" style="display:none;">
-            <input type="file" id="tFile">
-        </div>
-
-        <div id="writeBox" style="display:none;">
-            <textarea id="writeArea" style="width:100%; height:150px;"></textarea>
-        </div>
-
-        <br>
-
-        <button onclick="createTask()">Send</button>
-        <button onclick="closeTaskModal()">Cancel</button>
-
-    </div>
-</div>
-<script src="script.js"></script>
-
-
-<div id="taskModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center;">
-
-<div style="
-    background:white;
-    width:420px;
-    padding:20px;
-    border-radius:12px;
-    text-align:center;
-    box-shadow:0 10px 30px rgba(0,0,0,0.3);
-">
-
-<h2>📚 Assign Work</h2>
-
-<input id="tTitle" placeholder="Title" style="width:100%; padding:8px; margin:5px;">
-<textarea id="tDesc" placeholder="Description" style="width:100%; padding:8px; margin:5px;"></textarea>
-<input id="tClass" placeholder="Class" style="width:100%; padding:8px; margin:5px;">
-<input id="tSubject" placeholder="Subject" style="width:100%; padding:8px; margin:5px;">
-
-<hr>
-
-<!-- ONLY TWO ACTION BUTTONS -->
-<button onclick="openFileMode()" style="background:#2a5298; color:white; padding:10px; width:48%;">
-📁 File
+<button onclick="openModal()">➕ Add Student</button>
+<button onclick="loadSubmissionsView()">
+    📥 Submitted Works
 </button>
 
-<button onclick="openWriteMode()" style="background:#1e3c72; color:white; padding:10px; width:48%;">
-✍️ Write
-</button>
+
+<div id="submissionsBox"></div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="studentModal">
+<div class="modal-content">
+
+<h3>Create Student</h3>
+
+<form id="studentForm">
+
+    <input id="s_name" placeholder="Name"><br>
+    <input id="s_email" placeholder="Email"><br>
+    <input id="s_class" placeholder="Class"><br>
+    <input id="s_subject" placeholder="Subject"><br>
+    <input id="s_password" type="password" placeholder="Password"><br>
+
+    <button type="submit">Save Student</button>
+    <button type="button" onclick="closeModal()">Close</button>
+
+</form>
 
 </div>
 </div>
-<div id="writePage" style="display:none; position:fixed; inset:0; background:white; flex-direction:column;">
 
-<!-- TOP BAR -->
-<div style="background:#1e3c72; color:white; padding:10px;">
-    <b>✍️ Writing Mode</b>
-    <button onclick="closeWrite()" style="float:right; background:red; color:white;">X</button>
-</div>
+<script>
+const API = "http://127.0.0.1:5000";
 
-<!-- TEXT AREA -->
-<textarea id="writeArea" style="
-    flex:1;
-    width:100%;
-    border:none;
-    outline:none;
-    padding:20px;
-    font-size:16px;
-    color:black;
-"></textarea>
+function openModal() {
+    document.getElementById("studentModal").style.display = "block";
+}
 
-<!-- SEND BUTTON -->
-<button onclick="sendWrittenTask()" style="
-    background:green;
-    color:white;
-    padding:15px;
-    width:100%;
-">
-Send Work
-</button>
+function closeModal() {
+    document.getElementById("studentModal").style.display = "none";
+}
 
-</div>
+document.getElementById("studentForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        alert("Teacher not logged in");
+        return;
+    }
+
+    const res = await fetch("http://127.0.0.1:5000/teacherStudent/create-student", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+            name: document.getElementById("s_name").value,
+            email: document.getElementById("s_email").value,
+            class: document.getElementById("s_class").value,
+            subject: document.getElementById("s_subject").value,
+            password: document.getElementById("s_password").value
+        })
+    });
+
+    const text = await res.text();
+
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch (err) {
+        console.log("SERVER ERROR:", text);
+        alert("Server error");
+        return;
+    }
+
+    alert(data.msg);
+
+    if (data.success) {
+        closeModal();
+        document.getElementById("studentForm").reset();
+    }
+});
+
+/* ================= SUBMIT TASK ================= */
+async function submitTask(taskId) {
+
+    const formData = new FormData();
+
+    formData.append("task_id", taskId);
+    formData.append("answer", document.getElementById(`answer-${taskId}`).value);
+
+    const fileInput = document.getElementById(`file-${taskId}`);
+    if (fileInput.files[0]) {
+        formData.append("file", fileInput.files[0]);
+    }
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API}/submit-task`, {
+        method: "POST",
+        headers: {
+            Authorization: "Bearer " + token
+        },
+        body: formData
+    });
+
+    const data = await res.json();
+    alert(data.msg);
+}
+
+/* ================= SUBMISSIONS VIEW (FIXED LINK) ================= */
+async function loadSubmissionsView() {
+    try {
+        const res = await fetch(`${API}/submissions-view`);
+
+        console.log("STATUS:", res.status);
+
+        const text = await res.text();
+        console.log("RAW RESPONSE:", text);
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            alert("Server returned invalid JSON");
+            return;
+        }
+
+        const box = document.getElementById("submissionsBox");
+        box.innerHTML = "<h3>📥 Submitted Works</h3>";
+
+        if (!data.length) {
+            box.innerHTML += "<p>No submissions yet</p>";
+            return;
+        }
+
+        data.forEach(s => {
+            box.innerHTML += `
+                <div class="task-card">
+                    <h4>${s.title}</h4>
+                    <p><b>Student:</b> ${s.student_name}</p>
+                    <p><b>Answer:</b> ${s.answer || "-"}</p>
+
+                    ${s.file_path ? `
+                        <a href="${API}/uploads/${s.file_path}" target="_blank">
+                            📎 Download File
+                        </a>
+                    ` : ""}
+                </div>
+            `;
+        });
+
+    } catch (err) {
+        console.error(err);
+        alert("Failed to load submissions");
+    }
+}
+function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("teacher_id");
+    localStorage.removeItem("student_id");
+
+    sessionStorage.clear();
+
+    window.location.href = "index.html";
+}
+
+
+
+document.getElementById("taskForm").addEventListener("submit", async (e) => {
+    e.preventDefault(); // 🚨 STOP page reload
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        alert("Teacher not logged in");
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("title", document.getElementById("title").value);
+    formData.append("description", document.getElementById("description").value);
+    formData.append("class", document.getElementById("class").value);
+    formData.append("subject", document.getElementById("subject").value);
+
+    const fileInput = document.getElementById("file");
+    if (fileInput.files[0]) {
+        formData.append("file", fileInput.files[0]);
+    }
+
+    try {
+        const res = await fetch(`${API}/tasks`, {
+            method: "POST",
+            headers: {
+                Authorization: "Bearer " + token
+            },
+            body: formData
+        });
+
+        console.log("STATUS:", res.status);
+
+        const text = await res.text();
+        console.log("RAW RESPONSE:", text);
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            alert("Server error");
+            return;
+        }
+
+        alert(data.msg);
+
+        if (data.success) {
+            document.getElementById("taskForm").reset();
+            loadTasks(); // 🔥 refresh tasks list
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert("Server not reachable");
+    }
+});
+
+</script>
 
 </body>
 </html>

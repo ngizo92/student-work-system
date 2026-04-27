@@ -1,36 +1,19 @@
 const jwt = require("jsonwebtoken");
 
-/* ================= VERIFY TOKEN MIDDLEWARE ================= */
-/* FIX: supports "Bearer <token>" format from frontend */
+module.exports = function (req, res, next) {
+  const token = req.header("Authorization");
 
-function verifyToken(req, res, next) {
+  if (!token) {
+    return res.status(401).json({ message: "No token, access denied" });
+  }
 
-    const authHeader = req.headers["authorization"];
+  try {
+    const decoded = jwt.verify(token.replace("Bearer ", ""), "secretkey");
 
-    if (!authHeader) {
-        return res.json({
-            success: false,
-            message: "No token provided"
-        });
-    }
+    req.user = decoded; // 👈 THIS FIXES YOUR ERROR
 
-    try {
-        /* FIX: remove Bearer prefix safely */
-        const token = authHeader.startsWith("Bearer ")
-            ? authHeader.split(" ")[1]
-            : authHeader;
-
-        const decoded = jwt.verify(token, "student-system-secret-key");
-
-        req.user = decoded;
-        next();
-
-    } catch (err) {
-        return res.json({
-            success: false,
-            message: "Invalid token"
-        });
-    }
-}
-
-module.exports = verifyToken;
+    next();
+  } catch (err) {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};

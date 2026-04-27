@@ -73,18 +73,18 @@ button:hover {
 <div class="card">
     <h2>👨‍🎓 Student Login</h2>
 
-    <input id="name" placeholder="Enter Name">
+    <input id="email" placeholder="Enter Email">
     <input id="password" type="password" placeholder="Enter Password">
 
     <button onclick="login()">Login</button>
 </div>
 
 <script>
-const API = "http://localhost:5000";
+const API = "http://localhost:3000"; // match your main backend
 
 async function login() {
 
-    const email = document.getElementById("name").value;
+    const email = document.getElementById("email").value; // rename input OR fix below
     const password = document.getElementById("password").value;
 
     if (!email || !password) {
@@ -92,28 +92,34 @@ async function login() {
         return;
     }
 
-    const res = await fetch(`${API}/api/student/login`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
-    });
+    try {
+        const res = await fetch(`${API}/studentAuth/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (data.success) {
+        if (data.success) {
 
-        // 🔐 STORE TOKEN (IMPORTANT)
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userRole", "student");
-        localStorage.setItem("student", JSON.stringify(data.student));
+            localStorage.setItem("token", data.token || "");
+            localStorage.setItem("userRole", "student");
+            localStorage.setItem("student", JSON.stringify(data.student));
 
-        window.location.href = "student-dashboard.html";
+            window.location.href = "student-dashboard.html";
 
-    } else {
-        alert(data.message || "Login failed");
+        } else {
+            alert(data.message || "Login failed");
+        }
+
+    } catch (err) {
+        console.log(err);
+        alert("Server not running or wrong API");
     }
+
 }
 </script>
 </body>
