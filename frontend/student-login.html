@@ -5,6 +5,7 @@
 <title>Student Login</title>
 
 <style>
+/* (your styles unchanged) */
 body {
     margin: 0;
     height: 100vh;
@@ -74,21 +75,46 @@ button:hover {
     <h2>👨‍🎓 Student Login</h2>
 
     <input id="email" placeholder="Enter Email">
-    <input id="password" type="password" placeholder="Enter Password">
+
+    <!-- ✅ PASSWORD WITH TOGGLE -->
+    <div style="position: relative;">
+        <input id="password" type="password" placeholder="Enter Password" minlength="4">
+        <span onclick="togglePassword()" 
+              style="position:absolute; right:15px; top:12px; cursor:pointer;">
+              👁
+        </span>
+    </div>
 
     <button onclick="login()">Login</button>
 </div>
 
 <script>
-const API = "http://localhost:3000"; // match your main backend
+const API = "http://localhost:3000"; // unchanged
+
+// ✅ PASSWORD TOGGLE
+function togglePassword() {
+    const pass = document.getElementById("password");
+    pass.type = pass.type === "password" ? "text" : "password";
+}
 
 async function login() {
 
-    const email = document.getElementById("email").value; // rename input OR fix below
-    const password = document.getElementById("password").value;
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
 
+    // ✅ VALIDATION
     if (!email || !password) {
         alert("Fill all fields");
+        return;
+    }
+
+    if (!email.includes("@")) {
+        alert("Enter a valid email");
+        return;
+    }
+
+    if (password.length < 4) {
+        alert("Password must be at least 4 characters");
         return;
     }
 

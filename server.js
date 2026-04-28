@@ -9,7 +9,7 @@ require("dotenv").config();
 const db = require("./config/db");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // ================= JWT =================
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -263,7 +263,72 @@ app.post("/teacherStudent/create-student", auth, (req, res) => {
   });
 
 });
-  
+
+// ================= CREATE TEACHER =================
+app.post("/create-teacher", async (req, res) => {
+  let { name, email, password } = req.body;
+
+  email = email.trim().toLowerCase();
+
+  if (!name || !email || !password) {
+    return res.json({ success: false, msg: "Missing fields" });
+  }
+
+  try {
+    // ✅ CHECK DUPLICATE
+    db.query("SELECT * FROM teachers WHERE email = ?", [email], async (err, rows) => {
+      if (err) {
+        console.error(err);
+        return res.json({ success: false });
+      }
+
+      if (rows.length > 0) {
+        return res.json({ success: false, msg: "Teacher already exists" });
+      }
+
+      // ✅ HASH PASSWORD
+      const hash = await bcrypt.hash(password, 10);
+
+      db.query(
+        "INSERT INTO teachers (name, email, password) VALUES (?, ?, ?)",
+        [name, email, hash],
+        (err, result) => {
+
+          if (err) {
+            console.error(err);
+            return res.json({ success: false });
+          }
+
+          // ✅ AUTO LOGIN TOKEN
+          const token = jwt.sign(
+            { id: result.insertId, role: "teacher" },
+            process.env.JWT_SECRET
+          );
+
+          const teacher = {
+            id: result.insertId,
+            name,
+            email
+          };
+
+          res.json({
+            success: true,
+            msg: "Teacher created successfully",
+            token,
+            teacher
+          });
+        }
+      );
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.json({ success: false });
+  }
+});
+
+
+
 // ================= START =================
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

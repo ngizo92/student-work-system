@@ -110,3 +110,64 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+async function createTeacher() {
+  try {
+    const name = document.getElementById("t_name").value.trim();
+    const email = document.getElementById("t_email_reg").value.trim();
+    const password = document.getElementById("t_password_reg").value.trim();
+
+    // ✅ VALIDATION
+    if (!name || !email || !password) {
+      alert("All fields are required");
+      return;
+    }
+
+    // simple email check
+    if (!email.includes("@")) {
+      alert("Enter a valid email");
+      return;
+    }
+
+    if (password.length < 4) {
+      alert("Password must be at least 4 characters");
+      return;
+    }
+
+    const res = await fetch(`${API}/create-teacher`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name, email, password })
+    });
+
+    const data = await res.json();
+
+    alert(data.msg);
+
+    // ✅ AUTO LOGIN
+    if (data.success) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", "teacher");
+      localStorage.setItem("teacher", JSON.stringify(data.teacher));
+
+      window.location.href = "dashboard.html";
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
+  }
+}
+
+
+
+function openPopup() {
+  document.getElementById("teacherPopup").style.display = "block";
+}
+
+function closePopup() {
+  document.getElementById("teacherPopup").style.display = "none";
+}
+

@@ -12,7 +12,15 @@
 
 <form id="loginForm">
     <input type="email" id="email" placeholder="Email" required>
-    <input type="password" id="password" placeholder="Password" required>
+
+    <!-- PASSWORD FIELD + TOGGLE -->
+    <div style="position: relative;">
+        <input type="password" id="password" placeholder="Password" required minlength="4">
+        <span onclick="togglePassword()" 
+              style="position:absolute; right:10px; top:8px; cursor:pointer;">
+              👁
+        </span>
+    </div>
 
     <button type="submit">Login</button>
 </form>
@@ -22,5 +30,41 @@
 </div>
 
 <script src="script.js"></script>
+
+<!-- ✅ ADD THIS SCRIPT -->
+<script>
+document.getElementById("loginForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    // ✅ VALIDATION
+    if (!email || !password) {
+        alert("All fields are required");
+        return;
+    }
+
+    if (!email.includes("@")) {
+        alert("Enter a valid email");
+        return;
+    }
+
+    if (password.length < 4) {
+        alert("Password must be at least 4 characters");
+        return;
+    }
+
+    // ✅ call your existing function
+    teacherLogin();
+});
+
+// ✅ PASSWORD TOGGLE
+function togglePassword() {
+    const pass = document.getElementById("password");
+    pass.type = pass.type === "password" ? "text" : "password";
+}
+</script>
+
 </body>
 </html>
