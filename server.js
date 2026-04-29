@@ -74,47 +74,71 @@ app.post("/teacher-login", (req, res) => {
 // ================= TASKS =================
 app.post("/tasks", auth, upload.single("file"), (req, res) => {
 
-  const { title, description, class: className, subject } = req.body;
+  const { title, description, class: className, subject, priority, deadline } = req.body;
 
-  const teacher_id = req.user.id; // ✅ correct source
+  const teacher_id = req.user.id;
 
   const file_name = req.file ? req.file.originalname : null;
   const file_path = req.file ? req.file.filename : null;
 
+  // 1. INSERT INTO TASKS
   db.query(
     `INSERT INTO tasks 
-    (title, description, class, subject, file_name, file_path, teacher_id, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-
-    [title, description, className, subject, file_name, file_path, teacher_id],
-
+    (title, description, class, subject, priority, deadline, file_name, file_path, teacher_id, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+    [
+      title,
+      description,
+      className,
+      subject,
+      priority,
+      deadline,
+      file_name,
+      file_path,
+      teacher_id
+    ],
     (err, result) => {
+
       if (err) {
         console.error(err);
-        return res.json({ success: false });
+        return res.json({ success: false, msg: "DB error in tasks" });
       }
 
-      const taskId = result.insertId;
+      const taskId = result.insertId; // ✅ THIS FIXES YOUR ERROR
 
+      // 2. COPY INTO ASSIGNMENTS (YOUR DESIGN)
       db.query(
-        `INSERT INTO assignments 
-        (task_id, title, description, class, subject, file_name, file_path, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-        [taskId, title, description, className, subject, file_name, file_path],
-
+`INSERT INTO assignments 
+(task_id, title, description, class, subject, file_name, file_path, deadline, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?,?, NOW())`,
+        [
+          taskId,
+          title,
+          description,
+          className,
+          subject,
+          file_name,
+          file_path,
+          deadline // ✅ ADD THI
+        ],
         (err2) => {
+
           if (err2) {
             console.error(err2);
-            return res.json({ success: false });
+            return res.json({ success: false, msg: "DB error in assignments" });
           }
 
-          res.json({ success: true, msg: "Task created successfully" });
+          return res.json({
+            success: true,
+            msg: "Task created and assigned successfully"
+          });
         }
       );
+
     }
   );
-});
 
+});
 // ================= GET TASKS =================
 app.get("/tasks", (req, res) => {
   db.query("SELECT * FROM tasks ORDER BY id DESC", (err, rows) => {
@@ -140,6 +164,8 @@ app.get("/submissions-view", (req, res) => {
       submissions.answer,
       submissions.file_path,
       submissions.created_at,
+      submissions.marks,        
+      submissions.feedback,     
       tasks.title AS task_title,
       students.name AS student_name
     FROM submissions
@@ -173,18 +199,34 @@ app.post("/submit-task", auth, submissionUpload.single("file"), (req, res) => {
 
   const file_path = req.file ? req.file.filename : null;
 
-  db.query(
-    `INSERT INTO submissions (task_id, student_id, answer, file_path)
-     VALUES (?, ?, ?, ?)`,
-    [task_id, student_id, answer, file_path],
-    (err) => {
-      if (err) return res.json({ success: false });
+  
 
-      res.json({ success: true, msg: "Submitted successfully" });
+db.query(
+  "SELECT deadline FROM assignments WHERE task_id = ?",
+  [task_id],
+  (err, rows) => {
+
+    const deadline = new Date(rows[0].deadline);
+    const now = new Date();
+
+    if (deadline && now > deadline) {
+      return res.json({ success: false, msg: "Deadline passed" });
     }
-  );
-});
 
+    // ✅ KEEP your INSERT here (inside this block)
+
+    db.query(
+  `INSERT INTO submissions (task_id, student_id, answer, file_path)
+   VALUES (?, ?, ?, ?)`,
+  [task_id, student_id, answer, file_path],
+  (err) => {
+    if (err) return res.json({ success: false });
+
+    res.json({ success: true, msg: "Submitted successfully" });
+  }
+);
+});
+});
 // ================= STUDENT LOGIN (FIXED) =================
 app.post("/student-login", (req, res) => {
   let { email, password } = req.body;
@@ -327,7 +369,68 @@ app.post("/create-teacher", async (req, res) => {
   }
 });
 
+app.post("/grade-submission", auth, (req, res) => {
 
+  const { submission_id, marks, feedback } = req.body;
+
+  db.query(
+    "UPDATE submissions SET marks = ?, feedback = ? WHERE id = ?",
+    [marks, feedback, submission_id],
+    (err) => {
+
+      if (err) {
+        console.error(err);
+        return res.json({ success: false, msg: "Update failed" });
+      }
+
+      res.json({ success: true, msg: "Graded successfully" });
+    }
+  );
+
+});
+
+app.get("/student-submissions", auth, (req, res) => {
+
+  const student_id = req.user.id;
+
+  const sql = `
+    SELECT 
+      tasks.id,
+      submissions.id AS submission_id,
+      tasks.title,
+      tasks.description,
+      tasks.file_path,
+      tasks.deadline,
+      submissions.marks,
+      submissions.feedback
+    FROM tasks
+    LEFT JOIN submissions 
+      ON tasks.id = submissions.task_id 
+      AND submissions.student_id = ?
+    ORDER BY tasks.id DESC
+  `;
+
+  db.query(sql, [student_id], (err, results) => {
+    if (err) return res.json([]);
+    res.json(results);
+  });
+
+});
+
+app.delete("/delete-submission/:id", auth, (req, res) => {
+
+  const id = req.params.id;
+
+  db.query("DELETE FROM submissions WHERE id = ?", [id], (err) => {
+    if (err) {
+      console.error(err);
+      return res.json({ success: false, msg: "Delete failed" });
+    }
+
+    res.json({ success: true, msg: "Deleted successfully" });
+  });
+
+});
 
 // ================= START =================
 app.listen(PORT, () => {

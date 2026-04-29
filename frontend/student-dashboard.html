@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Student Dashboard</title>
@@ -12,7 +12,6 @@ body {
     background: #f4f6fb;
 }
 
-/* SIDEBAR */
 .sidebar {
     width: 250px;
     background: linear-gradient(180deg, #1e3c72, #2a5298);
@@ -41,7 +40,6 @@ body {
     color: white;
 }
 
-/* MAIN */
 .main {
     flex: 1;
     padding: 20px;
@@ -65,11 +63,6 @@ body {
     padding: 15px;
     border-radius: 10px;
     border-left: 5px solid #2a5298;
-    transition: 0.3s;
-}
-
-.card:hover {
-    transform: translateY(-5px);
 }
 
 .card h3 {
@@ -86,7 +79,6 @@ body {
 
 <body>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
     <h2>📘 Student Panel</h2>
 
@@ -95,15 +87,19 @@ body {
     <button class="logout" onclick="logout()">🚪 Logout</button>
 </div>
 
-<!-- MAIN -->
 <div class="main">
 
     <div class="topbar">
         <h2>Welcome Student</h2>
     </div>
 
-    <div id="taskList" class="task-grid"></div>
+  <div style="margin-bottom:15px;">
+    <button onclick="showSection('undone')">⏳ Undone Works</button>
+    <button onclick="showSection('done')">✅ Done Works</button>
+</div>
 
+<div id="undoneList" class="task-grid"></div>
+<div id="doneList" class="task-grid" style="display:none;"></div>
 </div>
 
 <script>
@@ -113,52 +109,85 @@ const API = "http://localhost:5000";
 async function loadTasks() {
 
     const studentClass = localStorage.getItem("studentClass");
+const res = await fetch(`${API}/student-submissions`, {
+    headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+    }
+});
+    const data = await res.json();
 
-    try {
-        const res = await fetch(`${API}/tasks?class=${studentClass}`);
-        const data = await res.json();
+  const undoneContainer = document.getElementById("undoneList");
+const doneContainer = document.getElementById("doneList");
 
-        const container = document.getElementById("taskList");
-        container.innerHTML = "";
+undoneContainer.innerHTML = "";
+doneContainer.innerHTML = "";
 
-        if (!data || data.length === 0) {
-            container.innerHTML = "<p>No tasks yet</p>";
-            return;
+    data.forEach(task => {
+
+        const deadline = new Date(task.deadline);
+        const now = new Date();
+
+        if (task.deadline && now > deadline) return;
+
+        const diff = deadline - now;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+       const isDone = task.submission_id != null;
+
+const cardHTML = `
+    <div class="card">
+        <h3>${task.title}</h3>
+        <p>${task.description || ""}</p>
+
+        ${task.deadline ? `<p><b>Deadline:</b> ${task.deadline}</p>` : ""}
+
+        ${task.file_path ? `
+            <a href="${API}/uploads/${task.file_path}" target="_blank">
+                📥 Download File
+            </a><br><br>
+        ` : ""}
+
+        ${
+          !isDone ? `
+            <textarea id="answer-${task.id}" placeholder="Write answer"></textarea><br>
+            <input type="file" id="file-${task.id}" /><br><br>
+            <button onclick="submitTask(${task.id})">📤 Submit Work</button>
+          ` : ""
         }
 
-        data.forEach(task => {
-            container.innerHTML += `
-                <div class="card">
-                    <h3>${task.title || ""}</h3>
-                    <p>${task.description || ""}</p>
+   ${
+  isDone ? `
+    <p><b>Marks:</b> ${task.marks}</p>
+    <p><b>Feedback:</b> ${task.feedback || "No feedback"}</p>
 
-                    ${task.file_path ? `
-                        <a href="http://127.0.0.1:5000/uploads/${task.file_path}" target="_blank">
-                            📥 Download File
-                        </a>
-                        <br><br>
-                    ` : ""}
+    <button onclick="deleteSubmission(${task.submission_id || task.id})"
+        style="background:red;color:white;padding:5px;margin-top:8px;">
+        🗑 Delete
+    </button>
+  ` : ``
+}
+`;
+if (isDone) {
+    doneContainer.innerHTML += cardHTML;
+} else {
+    undoneContainer.innerHTML += cardHTML;
+}
+    });
+      if (!undoneContainer.innerHTML) {
+        undoneContainer.innerHTML = "<p>No pending work 🎉</p>";
+    }
 
-                    <textarea id="answer-${task.id}" placeholder="Write answer"></textarea><br>
-
-                    <input type="file" id="file-${task.id}" /><br><br>
-
-                    <button onclick="submitTask(${task.id})">
-                        📤 Submit Work
-                    </button>
-                </div>
-            `;
-        });
-
-    } catch (err) {
-        console.error(err);
-        document.getElementById("taskList").innerHTML =
-            "<p style='color:red'>Failed to load tasks</p>";
+    if (!doneContainer.innerHTML) {
+        doneContainer.innerHTML = "<p>No completed work yet</p>";
     }
 }
-async function submitTask(taskId) {
-    const formData = new FormData();
 
+
+/* ================= SUBMIT ================= */
+async function submitTask(taskId) {
+
+    const formData = new FormData();
     formData.append("task_id", taskId);
     formData.append("answer", document.getElementById(`answer-${taskId}`).value);
 
@@ -179,46 +208,50 @@ async function submitTask(taskId) {
     alert(data.msg);
 }
 
+loadTasks();
+
+function showSection(type) {
+    const undone = document.getElementById("undoneList");
+    const done = document.getElementById("doneList");
+
+    if (type === "undone") {
+        undone.style.display = "grid";
+        done.style.display = "none";
+    } else {
+        undone.style.display = "none";
+        done.style.display = "grid";
+    }
+}
+
 /* ================= LOGOUT ================= */
 function logout() {
     localStorage.clear();
     window.location.href = "index.html";
 }
 
-async function studentLogin() {
-  const emailInput = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+async function deleteSubmission(id) {
 
-  const email = emailInput.trim().toLowerCase(); // 🔥 IMPORTANT
+    if (!confirm("Are you sure you want to delete this submission?")) return;
 
-  try {
-    const res = await fetch("http://127.0.0.1:5000/student-login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ email, password })
+    const res = await fetch(`${API}/delete-submission/${id}`, {
+        method: "DELETE",
+        headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+        }
     });
 
     const data = await res.json();
 
+    alert(data.msg);
+
     if (data.success) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", "student");
-
-      window.location.href = "student-dashboard.html";
-    } else {
-      alert(data.msg);
+    loadTasks();
+    showSection('done'); // 🔥 THIS is what refreshes UI
     }
-
-  } catch (err) {
-    console.error(err);
-    alert("Server error");
-  }
 }
-
-/* AUTO LOAD ON PAGE OPEN */
+/* AUTO LOAD */
 loadTasks();
+showSection('undone'); // default view
 </script>
 
 </body>
