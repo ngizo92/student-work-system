@@ -11,12 +11,13 @@
      <h2>Teacher Login</h2>
 
 <form id="loginForm">
-    <input type="email" id="email" placeholder="Email" required>
 
-    <!-- PASSWORD FIELD + TOGGLE -->
+    <input type="email" id="teacher_email" placeholder="Email" required>
+
     <div style="position: relative;">
-        <input type="password" id="password" placeholder="Password" required minlength="4">
-        <span onclick="togglePassword()" 
+        <input id="teacher_password" type="password" placeholder="Password" required minlength="4">
+
+        <span onclick="togglePassword()"
               style="position:absolute; right:10px; top:8px; cursor:pointer;">
               👁
         </span>
@@ -36,10 +37,9 @@
 document.getElementById("loginForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const email = document.getElementById("teacher_email").value.trim();
+    const password = document.getElementById("teacher_password").value.trim();
 
-    // ✅ VALIDATION
     if (!email || !password) {
         alert("All fields are required");
         return;
@@ -55,13 +55,12 @@ document.getElementById("loginForm").addEventListener("submit", function(e) {
         return;
     }
 
-    // ✅ call your existing function
-    teacherLogin();
+    teacherLogin(); // from script.js
 });
 
-// ✅ PASSWORD TOGGLE
+// PASSWORD TOGGLE
 function togglePassword() {
-    const pass = document.getElementById("password");
+    const pass = document.getElementById("teacher_password");
     pass.type = pass.type === "password" ? "text" : "password";
 }
 </script>

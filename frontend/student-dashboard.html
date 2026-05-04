@@ -5,74 +5,169 @@
 <title>Student Dashboard</title>
 
 <style>
-body {
-    margin: 0;
-    font-family: Arial;
-    display: flex;
-    background: #f4f6fb;
+* {
+    box-sizing: border-box;
 }
 
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    background: #eef2f7;
+    transition: 0.3s;
+}
+
+/* ===== DARK MODE ===== */
+body.dark {
+    background: #0f172a;
+    color: #e5e7eb;
+}
+
+/* ===== SIDEBAR ===== */
 .sidebar {
-    width: 250px;
+    width: 260px;
     background: linear-gradient(180deg, #1e3c72, #2a5298);
     color: white;
     height: 100vh;
-    padding: 20px;
+    padding: 25px;
     display: flex;
     flex-direction: column;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.1);
 }
 
 .sidebar h2 {
-    text-align: center;
+    margin-bottom: 30px;
 }
 
 .sidebar button {
-    margin-top: 15px;
-    padding: 10px;
+    margin-top: 12px;
+    padding: 12px;
     border: none;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    transition: 0.3s;
+    font-weight: 500;
+}
+
+.sidebar button:hover {
+    background: white;
+    color: #1e3c72;
 }
 
 .logout {
     margin-top: auto;
-    background: red;
+    background: #e74c3c !important;
+}
+
+/* ===== MAIN ===== */
+.main {
+    flex: 1;
+    padding: 25px;
+}
+
+/* ===== TOP BAR ===== */
+.topbar {
+    background: white;
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+body.dark .topbar {
+    background: #1e293b;
+}
+
+/* ===== SECTION BUTTONS ===== */
+.main > div button {
+    padding: 10px 15px;
+    margin-right: 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: #ddd;
+    transition: 0.3s;
+}
+
+.main > div button:hover {
+    background: #2a5298;
     color: white;
 }
 
-.main {
-    flex: 1;
-    padding: 20px;
-}
-
-.topbar {
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
+/* ===== GRID ===== */
 .task-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin-top: 15px;
 }
 
+/* ===== CARD ===== */
 .card {
     background: white;
-    padding: 15px;
-    border-radius: 10px;
+    padding: 18px;
+    border-radius: 14px;
     border-left: 5px solid #2a5298;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    transition: 0.3s;
 }
 
-.card h3 {
-    margin: 0;
-    color: #1e3c72;
+.card:hover {
+    transform: translateY(-3px);
 }
 
-.card p {
-    font-size: 14px;
-    color: #555;
+body.dark .card {
+    background: #1e293b;
+}
+
+/* ===== INPUTS ===== */
+textarea, input[type="file"] {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    outline: none;
+}
+
+textarea {
+    min-height: 80px;
+}
+
+/* ===== BUTTONS ===== */
+button.submit-btn {
+    margin-top: 10px;
+    width: 100%;
+    background: #2a5298;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button.submit-btn:hover {
+    background: #1e3c72;
+}
+
+/* ===== LINKS ===== */
+a {
+    text-decoration: none;
+    color: #2a5298;
+    font-weight: bold;
+}
+
+body.dark a {
+    color: #60a5fa;
+}
+
+/* ===== MARKS ===== */
+.marks {
+    font-weight: bold;
+    color: green;
 }
 </style>
 </head>
@@ -83,7 +178,7 @@ body {
     <h2>📘 Student Panel</h2>
 
     <button onclick="loadTasks()">📚 My Assignments</button>
-
+    <button onclick="toggleDarkMode()">🌙 Dark Mode</button>
     <button class="logout" onclick="logout()">🚪 Logout</button>
 </div>
 
@@ -93,106 +188,137 @@ body {
         <h2>Welcome Student</h2>
     </div>
 
-  <div style="margin-bottom:15px;">
-    <button onclick="showSection('undone')">⏳ Undone Works</button>
-    <button onclick="showSection('done')">✅ Done Works</button>
+    <div>
+        <button onclick="showSection('undone')">⏳ Undone Works</button>
+        <button onclick="showSection('done')">✅ Done Works</button>
+    </div>
+
+    <div id="undoneList" class="task-grid"></div>
+    <div id="doneList" class="task-grid" style="display:none;"></div>
+
 </div>
 
-<div id="undoneList" class="task-grid"></div>
-<div id="doneList" class="task-grid" style="display:none;"></div>
-</div>
 
 <script>
 const API = "http://localhost:5000";
+let allTasksData = [];
 
 /* ================= LOAD TASKS ================= */
 async function loadTasks() {
 
-    const studentClass = localStorage.getItem("studentClass");
-const res = await fetch(`${API}/student-submissions`, {
-    headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
-    }
+    const res = await fetch(`${API}/student-submissions`, {
+        headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+        }
+    });
+
+   let data = await res.json();
+
+/* sort by nearest deadline first */
+data.sort((a, b) => {
+    const d1 = a.deadline ? new Date(a.deadline) : new Date("9999-12-31");
+    const d2 = b.deadline ? new Date(b.deadline) : new Date("9999-12-31");
+    return d1 - d2;
 });
-    const data = await res.json();
+    allTasksData = data;
 
-  const undoneContainer = document.getElementById("undoneList");
-const doneContainer = document.getElementById("doneList");
-
-undoneContainer.innerHTML = "";
-doneContainer.innerHTML = "";
+    const undoneTasks = [];
+    const doneTasks = [];
 
     data.forEach(task => {
+        if (task.submission_id) doneTasks.push(task);
+        else undoneTasks.push(task);
+    });
 
-        const deadline = new Date(task.deadline);
-        const now = new Date();
+    document.getElementById("undoneList").innerHTML = "";
+    document.getElementById("doneList").innerHTML = "";
 
-        if (task.deadline && now > deadline) return;
+    undoneTasks.forEach(t => renderTask(t, false));
+    doneTasks.forEach(t => renderTask(t, true));
+}
 
-        const diff = deadline - now;
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+/* ================= RENDER ================= */
+function renderTask(task, isDone) {
 
-       const isDone = task.submission_id != null;
+    console.log(task);
 
-const cardHTML = `
-    <div class="card">
+    const container = document.getElementById(isDone ? "doneList" : "undoneList");
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
         <h3>${task.title}</h3>
         <p>${task.description || ""}</p>
 
-        ${task.deadline ? `<p><b>Deadline:</b> ${task.deadline}</p>` : ""}
+      <p>
+    <b>Deadline:</b>
+    ${task.deadline
+        ? new Date(task.deadline).toLocaleString()
+        : "No deadline"
+    }
+</p>
+
+${task.deadline ? (() => {
+
+    const now = new Date();
+    const deadline = new Date(task.deadline);
+    const diff = deadline - now;
+
+    if (diff < 0) {
+        return `<p style="color:red;font-weight:bold;">⛔ Overdue</p>`;
+    } 
+    else if (diff < 86400000) {
+        return `<p style="color:orange;font-weight:bold;">⚠ Due soon</p>`;
+    } 
+    else {
+        return `<p style="color:green;">🟢 On track</p>`;
+    }
+
+})() : ""}
+
 
         ${task.file_path ? `
-            <a href="${API}/uploads/${task.file_path}" target="_blank">
-                📥 Download File
-            </a><br><br>
-        ` : ""}
+            <a href="${API}/uploads/${encodeURIComponent(task.file_path)}"
+               download target="_blank"
+               style="display:inline-block;margin:10px 0;color:#2a5298;font-weight:bold;">
+               📥 Download Assignment
+            </a>
+        ` : `<p style="color:gray;">No file attached</p>`}
 
-        ${
-          !isDone ? `
-            <textarea id="answer-${task.id}" placeholder="Write answer"></textarea><br>
-            <input type="file" id="file-${task.id}" /><br><br>
-            <button onclick="submitTask(${task.id})">📤 Submit Work</button>
-          ` : ""
-        }
+        ${!isDone ? `
+            <textarea id="ans-${task.id}" placeholder="Write your answer"></textarea><br>
+            <input type="file" id="file-${task.id}"><br><br>
 
-   ${
-  isDone ? `
-    <p><b>Marks:</b> ${task.marks}</p>
-    <p><b>Feedback:</b> ${task.feedback || "No feedback"}</p>
+            <button class="submit-btn" onclick="submitTask(${task.id})">Submit Work</button>
+        ` : `
+<p class="marks">🏆 Marks: ${task.marks || 0}</p>
 
-    <button onclick="deleteSubmission(${task.submission_id || task.id})"
-        style="background:red;color:white;padding:5px;margin-top:8px;">
-        🗑 Delete
-    </button>
-  ` : ``
-}
-`;
-if (isDone) {
-    doneContainer.innerHTML += cardHTML;
-} else {
-    undoneContainer.innerHTML += cardHTML;
-}
-    });
-      if (!undoneContainer.innerHTML) {
-        undoneContainer.innerHTML = "<p>No pending work 🎉</p>";
-    }
+${task.feedback ? `
+    <p style="margin-top:8px;">
+        💬 <b>Feedback:</b> ${task.feedback}
+    </p>
+` : `
+    <p style="color:gray;">No feedback yet</p>
+`}
+<p style="color:gray;">✅ Submitted</p>
+        `}
+    `;
 
-    if (!doneContainer.innerHTML) {
-        doneContainer.innerHTML = "<p>No completed work yet</p>";
-    }
+    container.appendChild(div);
 }
 
-
-/* ================= SUBMIT ================= */
+/* ================= SUBMIT TASK ================= */
 async function submitTask(taskId) {
+
+    const answer = document.getElementById(`ans-${taskId}`).value;
+    const fileInput = document.getElementById(`file-${taskId}`);
 
     const formData = new FormData();
     formData.append("task_id", taskId);
-    formData.append("answer", document.getElementById(`answer-${taskId}`).value);
+    formData.append("answer", answer);
 
-    const fileInput = document.getElementById(`file-${taskId}`);
-    if (fileInput.files[0]) {
+    if (fileInput && fileInput.files[0]) {
         formData.append("file", fileInput.files[0]);
     }
 
@@ -205,53 +331,28 @@ async function submitTask(taskId) {
     });
 
     const data = await res.json();
-    alert(data.msg);
-}
 
-loadTasks();
-
-function showSection(type) {
-    const undone = document.getElementById("undoneList");
-    const done = document.getElementById("doneList");
-
-    if (type === "undone") {
-        undone.style.display = "grid";
-        done.style.display = "none";
-    } else {
-        undone.style.display = "none";
-        done.style.display = "grid";
-    }
-}
-
-/* ================= LOGOUT ================= */
-function logout() {
-    localStorage.clear();
-    window.location.href = "index.html";
-}
-
-async function deleteSubmission(id) {
-
-    if (!confirm("Are you sure you want to delete this submission?")) return;
-
-    const res = await fetch(`${API}/delete-submission/${id}`, {
-        method: "DELETE",
-        headers: {
-            Authorization: "Bearer " + localStorage.getItem("token")
-        }
-    });
-
-    const data = await res.json();
-
-    alert(data.msg);
-
-    if (data.success) {
+    alert("Submitted successfully!");
     loadTasks();
-    showSection('done'); // 🔥 THIS is what refreshes UI
-    }
 }
-/* AUTO LOAD */
+
+/* ================= UI ================= */
+function showSection(type) {
+    document.getElementById("undoneList").style.display = type === "undone" ? "grid" : "none";
+    document.getElementById("doneList").style.display = type === "done" ? "grid" : "none";
+}
+
+function toggleDarkMode(){
+    document.body.classList.toggle("dark");
+}
+
+function logout(){
+    localStorage.clear();
+    window.location.href="index.html";
+}
+
 loadTasks();
-showSection('undone'); // default view
+showSection("undone");
 </script>
 
 </body>

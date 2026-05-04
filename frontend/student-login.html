@@ -89,7 +89,8 @@ button:hover {
 </div>
 
 <script>
-const API = "http://localhost:3000"; // unchanged
+    const API = "http://localhost:5000";
+fetch("http://localhost:5000/student-login")// unchanged
 
 // ✅ PASSWORD TOGGLE
 function togglePassword() {
@@ -119,7 +120,7 @@ async function login() {
     }
 
     try {
-        const res = await fetch(`${API}/studentAuth/login`, {
+        const res = await fetch(`${API}/student-login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

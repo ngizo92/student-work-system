@@ -9,23 +9,46 @@
 
 <div class="container">
 
+<div class="hero">
+
+  <img src="images/sws-logo.png" alt="logo">
+
   <h1>STUDENT-WORK-SYSTEM</h1>
 
-  <!-- STUDENT LOGIN -->
-  <div class="card">
-    <h2>Student Login</h2>
-    <input id="student_email" placeholder="Email">
-    <input id="student_password" type="password" placeholder="Password">
-    <button onclick="studentLogin()">Login as Student</button>
+  <p>
+    Organized, efficient, reliable system for managing student tasks, assignments, schedules, collaboration, progress tracking, productivity, learning support, deadlines, and academic workflow management.
+  </p>
+
+</div>
+
+<!-- CHOOSE ENTITY BUTTON -->
+<div class="entity-container">
+
+  <button class="choose-btn" onclick="showEntities()">
+    Choose an Entity
+  </button>
+
+  <!-- ROLE OPTIONS (hidden initially) -->
+  <div id="entityOptions" class="entity-options">
+
+    <button class="role-btn student" onclick="goStudent()">
+      👨‍🎓 Student
+    </button>
+
+    <button class="role-btn teacher" onclick="goTeacher()">
+      👨‍🏫 Teacher
+    </button>
+
   </div>
 
+</div>
+
+
+  <!-- STUDENT LOGIN -->
+ 
+
   <!-- TEACHER LOGIN -->
-  <div class="card">
-    <h2>Teacher Login</h2>
-    <input id="teacher_email" placeholder="Email">
-    <input id="teacher_password" type="password" placeholder="Password">
-    <button onclick="teacherLogin()">Login as Teacher</button>
-  </div>
+ 
 
   <!-- CREATE TEACHER -->
   <button class="primary" onclick="openPopup()">

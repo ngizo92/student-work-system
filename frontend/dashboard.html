@@ -4,15 +4,18 @@
 <title>Teacher Dashboard</title>
 
 <style>
+* { box-sizing: border-box; }
+
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
-    background: #f4f6fb;
+    background: #eef2f7;
     display: flex;
 }
 
+/* ===== SIDEBAR ===== */
 .nav {
-    width: 220px;
+    width: 240px;
     height: 100vh;
     background: linear-gradient(180deg, #1e3c72, #2a5298);
     color: white;
@@ -21,118 +24,274 @@ body {
     padding: 20px;
 }
 
-.nav h3 {
+.nav h2 {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
 }
 
 .nav button {
-    background: white;
-    color: #1e3c72;
+    background: transparent;
+    color: white;
     border: none;
-    padding: 10px;
+    padding: 12px;
     margin-top: 10px;
-    border-radius: 6px;
+    border-radius: 8px;
+    text-align: left;
     cursor: pointer;
-    font-weight: bold;
+    transition: 0.3s;
 }
 
-.container {
+.nav button:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* ===== MAIN ===== */
+.main {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== HEADER ===== */
+.header {
+    background: white;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.header h3 {
+    margin: 0;
+}
+
+.logout {
+    background: #e74c3c;
+}
+
+.logout:hover {
+    background: #c0392b;
+}
+
+/* ===== CONTENT ===== */
+.container {
     padding: 25px;
 }
 
-form {
+/* ===== STATS ===== */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
     background: white;
-    padding: 15px;
-    border-radius: 10px;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.stat-card h4 {
+    margin: 0;
+    font-size: 14px;
+    color: gray;
+}
+
+.stat-card p {
+    font-size: 22px;
+    margin: 5px 0 0;
+}
+
+/* ===== FORMS ===== */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
     margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
 }
 
 input, textarea, select {
     padding: 10px;
-    margin: 5px;
-    width: 220px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    width: 100%;
+}
+
+textarea {
+    grid-column: span 2;
 }
 
 button {
     padding: 10px;
-    margin: 5px;
-    cursor: pointer;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     background: #2a5298;
     color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #1e3c72;
+}
+
+/* ===== TABS ===== */
+.tabs {
+    margin-bottom: 15px;
+}
+
+.tabs button {
+    background: #ddd;
+    color: #333;
+}
+
+.tabs button.active {
+    background: #2a5298;
+    color: white;
+}
+
+/* ===== SUBMISSIONS ===== */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
 }
 
 .task-card {
     background: white;
     padding: 15px;
-    border-radius: 10px;
+    border-radius: 12px;
     border-left: 5px solid #2a5298;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    transition: 0.3s;
+}
+
+.task-card:hover {
+    transform: translateY(-3px);
+}
+
+.delete-btn {
+    background: #e74c3c;
     margin-top: 10px;
 }
 
-.high { color: red; font-weight: bold; }
-.medium { color: orange; }
-.low { color: green; }
-
+.delete-btn:hover {
+    background: #c0392b;
+}
 </style>
 </head>
 
 <body>
 
+<!-- SIDEBAR -->
 <div class="nav">
-    <h3>Teacher Panel</h3>
-    <button onclick="logout()">Logout</button>
+    <h2>📊 Dashboard</h2>
+    <button>📋 Tasks</button>
+    <button onclick="showStudents()">👨‍🎓 Students</button>
+    <button>📨 Submissions</button>
 </div>
 
-<div class="container">
+<!-- MAIN -->
+<div class="main">
 
-<h3>Create Task</h3>
+    <!-- HEADER -->
+    <div class="header">
+        <h3>Welcome, Teacher</h3>
+        <button class="logout" onclick="logout()">Logout</button>
+    </div>
 
-<form id="taskForm">
-  <input type="text" id="title" placeholder="Title" required />
-  <textarea id="description" placeholder="Description"></textarea>
-  <input type="text" id="class" placeholder="Class" required />
-  <input type="text" id="subject" placeholder="Subject" required />
-  <input type="file" id="file" />
+    <!-- CONTENT -->
+    <div class="container">
 
-  <select id="priority">
-    <option value="low">Low</option>
-    <option value="medium">Medium</option>
-    <option value="high">High</option>
-  </select>
+        <!-- STATS -->
+        <div class="stats">
+            <div class="stat-card">
+                <h4>Total Submissions</h4>
+                <p id="totalSub">0</p>
+            </div>
+            <div class="stat-card">
+                <h4>Unmarked</h4>
+                <p id="unmarkedCount">0</p>
+            </div>
+            <div class="stat-card">
+                <h4>Marked</h4>
+                <p id="markedCount">0</p>
+            </div>
+        </div>
 
-  <input type="datetime-local" id="deadline" />
+        <!-- CREATE TASK -->
+        <div class="card">
+            <h3>Create Task</h3>
+            <form id="taskForm" class="form-grid">
+                <input type="text" id="title" placeholder="Title" required />
+                <input type="text" id="class" placeholder="Class" required />
+                <input type="text" id="subject" placeholder="Subject" required />
+                <select id="priority">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
+                <input type="datetime-local" id="deadline" />
+                <input type="file" id="file" />
+                <textarea id="description" placeholder="Description"></textarea>
+                <button type="submit">Assign Task</button>
+            </form>
+        </div>
 
-  <button type="submit">Assign Task</button>
-</form>
+        <!-- CREATE STUDENT -->
+        <div class="card">
+            <h3>Create Student</h3>
+            <form id="studentForm" class="form-grid">
+                <input type="text" id="s_name" placeholder="Name" required />
+                <input type="email" id="s_email" placeholder="Email" required />
+                <input type="text" id="s_class" placeholder="Class" />
+                <input type="text" id="s_subject" placeholder="Subject" />
+                <input type="password" id="s_password" placeholder="Password" required />
+                <button type="submit">Create Student</button>
+            </form>
+        </div>
 
-<h3>Create Student</h3>
+        
 
-<form id="studentForm">
-  <input type="text" id="s_name" placeholder="Name" required />
-  <input type="email" id="s_email" placeholder="Email" required />
-  <input type="text" id="s_class" placeholder="Class" />
-  <input type="text" id="s_subject" placeholder="Subject" />
-  <input type="password" id="s_password" placeholder="Password" required />
 
-  <button type="submit">Create Student</button>
-</form>
+        <!-- SUBMISSIONS -->
+        <div class="card">
+            <h3>Student Submissions</h3>
 
-<h3>Student Submissions</h3>
+            <div class="tabs">
+                <button onclick="switchTab('unmarked')" id="tab-unmarked">Unmarked</button>
+                <button onclick="switchTab('marked')" id="tab-marked">Marked</button>
+            </div>
 
-<div style="margin-bottom:15px;">
-    <button onclick="showSubmissionSection('unmarked')">📝 Unmarked Works</button>
-    <button onclick="showSubmissionSection('marked')">✅ Marked Works</button>
+            <div id="unmarkedList" class="grid"></div>
+            <div id="markedList" class="grid" style="display:none;"></div>
+        </div>
+
+    </div>
 </div>
 
-<div id="unmarkedList"></div>
-<div id="markedList" style="display:none;"></div>
+<div id="studentsSection" class="card" style="display:none;">
+    <h3>All Students</h3>
 
+    <input 
+        type="text" 
+        id="studentSearch" 
+        placeholder="🔍 Search by name, email, class, subject..."
+        oninput="filterStudents()"
+        style="width:100%; margin-bottom:15px;"
+    />
+
+    <div id="studentsList" class="grid"></div>
 </div>
 
 <script src="script.js"></script>
@@ -143,9 +302,33 @@ function logout() {
     window.location.href = "index.html";
 }
 
+function switchTab(type) {
+    document.getElementById("unmarkedList").style.display = type === "unmarked" ? "grid" : "none";
+    document.getElementById("markedList").style.display = type === "marked" ? "grid" : "none";
+
+    document.getElementById("tab-unmarked").classList.toggle("active", type === "unmarked");
+    document.getElementById("tab-marked").classList.toggle("active", type === "marked");
+}
+
+/* ===== Hook into your existing loadSubmissions ===== */
+const oldLoad = loadSubmissions;
+
+loadSubmissions = async function () {
+    await oldLoad();
+
+    // update stats
+    const total = document.querySelectorAll(".task-card").length;
+    const marked = document.querySelectorAll("#markedList .task-card").length;
+    const unmarked = document.querySelectorAll("#unmarkedList .task-card").length;
+
+    document.getElementById("totalSub").innerText = total;
+    document.getElementById("markedCount").innerText = marked;
+    document.getElementById("unmarkedCount").innerText = unmarked;
+};
+
 window.onload = function () {
     loadSubmissions();
-    showSubmissionSection('unmarked'); // default
+    switchTab('unmarked');
 };
 </script>
 
