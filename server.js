@@ -28,7 +28,7 @@ app.use("/uploads", express.static("uploads"));
 // ================= MULTER (SINGLE CLEAN VERSION) =================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
 });
 
 const upload = multer({ storage });
@@ -57,25 +57,68 @@ app.post("/teacher-login", (req, res) => {
 
   email = email?.trim().toLowerCase();
 
-  db.query("SELECT * FROM teachers WHERE email = ?", [email], async (err, rows) => {
-    if (err || rows.length === 0)
-      return res.json({ success: false, msg: "Invalid credentials" });
+  db.query(
+    "SELECT * FROM teachers WHERE email = ?",
+    [email],
+    async (err, rows) => {
+      if (err || rows.length === 0)
+        return res.json({ success: false, msg: "Invalid credentials" });
 
-    const teacher = rows[0];
-    const ok = await bcrypt.compare(password, teacher.password);
+      const teacher = rows[0];
+      const ok = await bcrypt.compare(password, teacher.password);
 
-    if (!ok) return res.json({ success: false, msg: "Wrong password" });
+      if (!ok) return res.json({ success: false, msg: "Wrong password" });
 
-    const token = jwt.sign({ id: teacher.id, role: "teacher" }, JWT_SECRET);
+      const token = jwt.sign({ id: teacher.id, role: "teacher" }, JWT_SECRET);
 
-    res.json({ success: true, token, teacher });
+      res.json({ success: true, token, teacher });
+    },
+  );
+});
+
+app.post("/create-teacher", (req, res) => {
+  console.log("CREATE TEACHER HIT:", req.body);
+
+  let { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return res.json({ success: false, msg: "Missing fields" });
+  }
+
+  email = email.trim().toLowerCase();
+
+  bcrypt.hash(password, 10, (err, hash) => {
+    if (err) return res.json({ success: false });
+
+    db.query(
+      "INSERT INTO teachers (name, email, password) VALUES (?, ?, ?)",
+      [name, email, hash],
+      (err2) => {
+        if (err2) {
+          console.log("🔥 FULL DB ERROR:", err2.sqlMessage || err2);
+          return res.json({
+            success: false,
+            msg: err2.sqlMessage || "DB insert failed",
+          });
+        }
+        res.json({ success: true, msg: "Teacher created successfully" });
+      },
+    );
   });
 });
 
 // ================= CREATE TASK =================
 app.post("/tasks", auth, upload.single("file"), (req, res) => {
 
-  const { title, description, class: className, subject, priority, deadline } = req.body;
+  const {
+    title,
+    description,
+    class: className,
+    subject,
+    priority,
+    deadline
+  } = req.body;
+
   const teacher_id = req.user.id;
 
   const file_name = req.file?.originalname || null;
@@ -85,10 +128,22 @@ app.post("/tasks", auth, upload.single("file"), (req, res) => {
     `INSERT INTO tasks 
     (title, description, class, subject, priority, deadline, file_name, file_path, teacher_id, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-    [title, description, className, subject, priority, deadline, file_name, file_path, teacher_id],
+    [
+      title,
+      description,
+      className,
+      subject,
+      priority,
+      deadline,
+      file_name,
+      file_path,
+      teacher_id
+    ],
     (err, result) => {
-
-      if (err) return res.json({ success: false, msg: "Task error" });
+      if (err) {
+        console.log(err);
+        return res.json({ success: false, msg: "Task error" });
+      }
 
       const taskId = result.insertId;
 
@@ -96,9 +151,21 @@ app.post("/tasks", auth, upload.single("file"), (req, res) => {
         `INSERT INTO assignments 
         (task_id, title, description, class, subject, file_name, file_path, deadline, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-        [taskId, title, description, className, subject, file_name, file_path, deadline],
+       [
+  taskId,
+  title,
+  description,
+  className,
+  subject,
+  file_name,
+  file_path,
+  deadline
+],
         (err2) => {
-          if (err2) return res.json({ success: false, msg: "Assignment error" });
+          if (err2) {
+            console.log(err2);
+            return res.json({ success: false, msg: "Assignment error" });
+          }
 
           res.json({ success: true, msg: "Task created" });
         }
@@ -106,7 +173,6 @@ app.post("/tasks", auth, upload.single("file"), (req, res) => {
     }
   );
 });
-
 // ================= GET ASSIGNMENTS =================
 app.get("/assignments", (req, res) => {
   db.query("SELECT * FROM assignments ORDER BY id DESC", (err, rows) => {
@@ -115,6 +181,8 @@ app.get("/assignments", (req, res) => {
   });
 });
 
+// ================
+
 // ================= SUBMIT TASK =================
 app.post("/submit-task", auth, upload.single("file"), (req, res) => {
 
@@ -122,8 +190,9 @@ app.post("/submit-task", auth, upload.single("file"), (req, res) => {
   const student_id = req.user.id;
   const file_path = req.file?.filename || null;
 
+  // ✅ FIX: use assignments.id (NOT task_id lookup confusion)
   db.query(
-    "SELECT deadline FROM assignments WHERE task_id = ?",
+    "SELECT deadline FROM assignments WHERE id = ?",
     [task_id],
     (err, rows) => {
 
@@ -142,7 +211,10 @@ app.post("/submit-task", auth, upload.single("file"), (req, res) => {
          VALUES (?, ?, ?, ?)`,
         [task_id, student_id, answer, file_path],
         (err2) => {
-          if (err2) return res.json({ success: false });
+          if (err2) {
+            console.log(err2);
+            return res.json({ success: false, msg: "Submit failed" });
+          }
 
           res.json({ success: true, msg: "Submitted successfully" });
         }
@@ -155,61 +227,74 @@ app.post("/submit-task", auth, upload.single("file"), (req, res) => {
 app.post("/student-login", (req, res) => {
   let { email, password } = req.body;
 
-  if (!email || !password)
-    return res.status(400).json({ success: false });
+  if (!email || !password) return res.status(400).json({ success: false });
 
   email = email.trim().toLowerCase();
 
-  db.query("SELECT * FROM students WHERE email = ?", [email], async (err, rows) => {
-    if (err || rows.length === 0)
-      return res.json({ success: false });
+  db.query(
+    "SELECT * FROM students WHERE email = ?",
+    [email],
+    async (err, rows) => {
+      if (err || rows.length === 0) return res.json({ success: false });
 
-    const student = rows[0];
-    const match = await bcrypt.compare(password, student.password);
+      const student = rows[0];
+      const match = await bcrypt.compare(password, student.password);
 
-    if (!match) return res.json({ success: false });
+      if (!match) return res.json({ success: false });
 
-    const token = jwt.sign({ id: student.id, role: "student" }, JWT_SECRET);
+      const token = jwt.sign({ id: student.id, role: "student" }, JWT_SECRET);
 
-    res.json({ success: true, token, student });
-  });
+      res.json({ success: true, token, student });
+    },
+  );
 });
 
 // ================= CREATE STUDENT =================
 app.post("/teacherStudent/create-student", auth, (req, res) => {
-
   let { name, email, class: className, subject, password } = req.body;
+
+console.log("🔥 CLASS VALUE:", className);
+
+  console.log("CREATE STUDENT BODY:", req.body);
 
   email = email?.trim().toLowerCase();
 
+  if (!name || !email || !password || !className) {
+  return res.json({ success: false, msg: "Missing fields" });
+}
+
   bcrypt.hash(password, 10, (err, hash) => {
-    if (err) return res.json({ success: false });
+    if (err) {
+      console.log("HASH ERROR:", err);
+      return res.json({ success: false, msg: "Hash error" });
+    }
 
-    db.query(
-      "INSERT INTO students (name, email, `class`, subject, password) VALUES (?, ?, ?, ?, ?)",
-      [name, email, className, subject, hash],
-      (err2) => {
-        if (err2) return res.json({ success: false });
-
-        res.json({ success: true });
+    const sql = `
+  INSERT INTO students (name, email, class, subject, password)
+  VALUES (?, ?, ?, ?, ?)
+`;
+    db.query(sql, [name, email, className, subject, hash], (err2) => {
+      if (err2) {
+        console.log("🔥 FULL DB ERROR:", err2.sqlMessage || err2); // 🔥 IMPORTANT
+        return res.json({ success: false, msg: "DB insert failed" });
       }
-    );
+
+      return res.json({ success: true, msg: "Student created" });
+    });
   });
 });
 
 app.delete("/students/:id", auth, (req, res) => {
+  const id = req.params.id;
 
-    const id = req.params.id;
+  db.query("DELETE FROM students WHERE id = ?", [id], (err) => {
+    if (err) {
+      console.error(err);
+      return res.json({ success: false, msg: "Delete failed" });
+    }
 
-    db.query("DELETE FROM students WHERE id = ?", [id], (err) => {
-
-        if (err) {
-            console.error(err);
-            return res.json({ success: false, msg: "Delete failed" });
-        }
-
-        res.json({ success: true, msg: "Student deleted" });
-    });
+    res.json({ success: true, msg: "Student deleted" });
+  });
 });
 
 // ================= GRADE =================
@@ -218,14 +303,27 @@ app.post("/grade-submission", auth, (req, res) => {
   const { submission_id, marks, feedback } = req.body;
 
   db.query(
-    "UPDATE submissions SET marks = ?, feedback = ? WHERE id = ?",
+    `
+      UPDATE submissions
+      SET marks = ?, feedback = ?
+      WHERE id = ?
+    `,
     [marks, feedback, submission_id],
     (err) => {
-      if (err) return res.json({ success: false });
 
-      res.json({ success: true });
+      if (err) {
+        console.log(err);
+        return res.json({ success: false });
+      }
+
+      res.json({
+        success: true,
+        msg: "Marked successfully"
+      });
+
     }
   );
+
 });
 
 // ================= STUDENT VIEW TASKS =================
@@ -235,30 +333,36 @@ app.get("/student-submissions", auth, (req, res) => {
 
   const sql = `
     SELECT 
-      tasks.id,
-      submissions.id AS submission_id,
-      tasks.title,
-      tasks.description,
-      tasks.file_path,
-      tasks.deadline,
-      submissions.marks,
-      submissions.feedback
-    FROM tasks
-    LEFT JOIN submissions 
-      ON tasks.id = submissions.task_id 
-      AND submissions.student_id = ?
-    ORDER BY tasks.id DESC
+      a.id,
+      a.title,
+      a.description,
+      a.file_path,
+      a.deadline,
+      s.id AS submission_id,
+      s.task_id,
+      s.marks,
+      s.feedback
+    FROM assignments a
+    LEFT JOIN submissions s 
+      ON s.task_id = a.id 
+      AND s.student_id = ?
+    ORDER BY a.id DESC
   `;
 
   db.query(sql, [student_id], (err, results) => {
-    if (err) return res.json([]);
+
+    if (err) {
+      console.log("JOIN ERROR:", err);
+      return res.json([]);
+    }
+
+    console.log("JOIN OUTPUT:", results); // DEBUG
+
     res.json(results);
   });
 });
-
 // ================= LEADERBOARD FIXED =================
 app.get("/leaderboard", (req, res) => {
-
   const sql = `
     SELECT 
       s.id,
@@ -278,7 +382,8 @@ app.get("/leaderboard", (req, res) => {
 });
 
 // ================= TEACHER VIEW SUBMISSIONS =================
-app.get("/submissions-view", (req, res) => {
+// ================= TEACHER VIEW SUBMISSIONS =================
+app.get("/submissions-view", auth, (req, res) => {
 
   const sql = `
     SELECT 
@@ -288,12 +393,274 @@ app.get("/submissions-view", (req, res) => {
       submissions.marks,
       submissions.feedback,
       submissions.created_at,
-      tasks.title AS task_title,
+
+      assignments.title AS task_title,
       students.name AS student_name
+
     FROM submissions
-    JOIN tasks ON submissions.task_id = tasks.id
-    JOIN students ON submissions.student_id = students.id
-    ORDER BY submissions.id DESC
+
+    LEFT JOIN assignments 
+      ON submissions.task_id = assignments.id
+
+    LEFT JOIN students 
+      ON submissions.student_id = students.id
+
+    ORDER BY submissions.created_at DESC
+  `;
+
+  db.query(sql, (err, rows) => {
+
+    if (err) {
+      console.log(err);
+      return res.json([]);
+    }
+
+    res.json(rows);
+
+  });
+
+});
+
+// ================= GET STUDENTS =================
+// ================= GET STUDENTS =================
+app.get("/students", auth, (req, res) => {
+
+  console.log("🔥 STUDENTS ROUTE HIT");
+
+  const sql = `
+    SELECT 
+      id,
+      name,
+      email,
+      class,
+      subject
+    FROM students
+    ORDER BY id DESC
+  `;
+
+  db.query(sql, (err, rows) => {
+
+    if (err) {
+      console.error(err);
+      return res.status(500).json([]);
+    }
+
+    res.json(rows);
+
+  });
+
+});
+app.post("/dos-login", (req, res) => {
+  let { email, password } = req.body;
+
+  email = email?.trim().toLowerCase();
+
+  db.query("SELECT * FROM dos WHERE email = ?", [email], async (err, rows) => {
+    if (err || rows.length === 0)
+      return res.json({ success: false, msg: "Invalid credentials" });
+
+    const dos = rows[0];
+    const ok = await bcrypt.compare(password, dos.password);
+
+    if (!ok) return res.json({ success: false, msg: "Wrong password" });
+
+    const token = jwt.sign({ id: dos.id, role: "dos" }, JWT_SECRET);
+
+    res.json({ success: true, token, dos });
+  });
+});
+
+// ================= TEACHER ONLY STUDENTS =================
+app.get("/teacher/students", auth, (req, res) => {
+
+  if (req.user.role !== "teacher") {
+    return res.status(403).json({ success: false, msg: "Only teachers allowed" });
+  }
+
+  const teacherId = req.user.id;
+
+  const sql = `
+    SELECT 
+      s.id,
+      s.name,
+      s.email,
+      s.class_id,
+      s.subject
+    FROM students s
+    JOIN teacher_classes tc ON s.class_id = tc.class_id
+    WHERE tc.teacher_id = ?
+    ORDER BY s.id DESC
+  `;
+
+  db.query(sql, [teacherId], (err, rows) => {
+    if (err) {
+      console.log(err);
+      return res.json([]);
+    }
+
+    res.json(rows);
+  });
+});
+
+app.post("/dos/create-class", auth, (req, res) => {
+  console.log("DOS USER:", req.user);
+  console.log("CREATE CLASS BODY:", req.body);
+
+  if (req.user.role !== "dos") {
+    return res.status(403).json({ success: false, msg: "Only DOS allowed" });
+  }
+
+  const { name, level, description } = req.body;
+
+  db.query(
+    "INSERT INTO classes (name, level, description) VALUES (?, ?, ?)",
+    [name, level, description],
+    (err) => {
+      if (err) {
+        return res.json({ success: false, msg: "Error creating class" });
+      }
+
+      res.json({ success: true, msg: "Class created successfully" });
+    },
+  );
+});
+
+// ================= GET CLASSES =================
+app.get("/classes", auth, (req, res) => {
+  db.query("SELECT * FROM classes ORDER BY id DESC", (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.json([]);
+    }
+
+    res.json(rows);
+  });
+});
+
+app.post("/dos-register", (req, res) => {
+  let { name, email, password } = req.body;
+
+  email = email?.trim().toLowerCase();
+
+  bcrypt.hash(password, 10, (err, hash) => {
+    if (err) return res.json({ success: false, msg: "Error" });
+
+    db.query(
+      "INSERT INTO dos (name, email, password) VALUES (?, ?, ?)",
+      [name, email, hash],
+      (err2) => {
+        if (err2)
+          return res.json({
+            success: false,
+            msg: "DOS already exists or error",
+          });
+
+        res.json({ success: true, msg: "DOS account created" });
+      },
+    );
+  });
+});
+
+// ================= GET TEACHERS =================
+app.get("/teachers", auth, (req, res) => {
+  db.query("SELECT id, name, email FROM teachers", (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.json([]);
+    }
+
+    res.json(rows);
+  });
+});
+app.post("/dos/assign-class", auth, (req, res) => {
+  const { student_id, class_id } = req.body;
+
+  db.query(
+    "UPDATE students SET class_id = ? WHERE id = ?",
+    [class_id, student_id],
+    (err) => {
+      if (err) {
+        console.log(err);
+        return res.json({ success: false, msg: "Assignment failed" });
+      }
+
+      res.json({ success: true, msg: "Class assigned successfully" });
+    },
+  );
+});
+
+app.post("/dos/assign-student-class", auth, (req, res) => {
+
+  if (req.user.role !== "dos") {
+    return res.status(403).json({ success: false, msg: "Only DOS allowed" });
+  }
+
+  const { student_id, class_id } = req.body;
+
+  db.query(
+    "UPDATE students SET class_id = ? WHERE id = ?",
+    [class_id, student_id],
+    (err) => {
+
+      if (err) {
+        console.log(err);
+        return res.json({ success: false, msg: "Assignment failed" });
+      }
+
+      res.json({ success: true, msg: "Class assigned successfully" });
+    }
+  );
+});
+
+app.post("/dos/unassign-student-class", auth, (req, res) => {
+
+  if (req.user.role !== "dos") {
+    return res.status(403).json({ success: false });
+  }
+
+  const { student_id } = req.body;
+
+  db.query(
+    "UPDATE students SET class_id = NULL WHERE id = ?",
+    [student_id],
+    (err) => {
+
+      if (err) {
+        return res.json({ success: false, msg: "Unassign failed" });
+      }
+
+      res.json({ success: true, msg: "Class removed" });
+    }
+  );
+});
+
+app.delete("/dos/teachers/:id", auth, (req, res) => {
+  if (req.user.role !== "dos") {
+    return res.status(403).json({ success: false });
+  }
+
+  const id = req.params.id;
+
+  db.query("DELETE FROM teachers WHERE id = ?", [id], (err) => {
+    if (err) {
+      return res.json({ success: false, msg: "Delete failed" });
+    }
+
+    res.json({ success: true, msg: "Teacher deleted" });
+  });
+});
+
+app.get("/dos/teachers-with-classes", auth, (req, res) => {
+  const sql = `
+    SELECT 
+      t.id AS teacher_id,
+      t.name,
+      t.email,
+      c.name AS class_name
+    FROM teachers t
+    LEFT JOIN teacher_classes tc ON t.id = tc.teacher_id
+    LEFT JOIN classes c ON tc.class_id = c.id
+    ORDER BY t.id DESC
   `;
 
   db.query(sql, (err, rows) => {
@@ -306,21 +673,24 @@ app.get("/submissions-view", (req, res) => {
   });
 });
 
-// ================= GET STUDENTS =================
-app.get("/students", auth, (req, res) => {
+app.post("/dos/unassign-class", auth, (req, res) => {
+  if (req.user.role !== "dos") {
+    return res.status(403).json({ success: false });
+  }
 
-  db.query("SELECT id, name, email, class, subject FROM students ORDER BY id DESC",
-    (err, rows) => {
+  const { teacher_id, class_id } = req.body;
 
-      if (err) {
-        console.error(err);
-        return res.json([]);
-      }
+  db.query(
+    "DELETE FROM teacher_classes WHERE teacher_id = ? AND class_id = ?",
+    [teacher_id, class_id],
+    (err) => {
+      if (err) return res.json({ success: false });
 
-      res.json(rows);
-    }
+      res.json({ success: true, msg: "Class unassigned" });
+    },
   );
 });
+
 
 // ================= START =================
 app.listen(PORT, () => {

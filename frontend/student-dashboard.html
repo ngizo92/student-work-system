@@ -212,29 +212,17 @@ async function loadTasks() {
         }
     });
 
-   let data = await res.json();
+    let data = await res.json();
 
-/* sort by nearest deadline first */
-data.sort((a, b) => {
-    const d1 = a.deadline ? new Date(a.deadline) : new Date("9999-12-31");
-    const d2 = b.deadline ? new Date(b.deadline) : new Date("9999-12-31");
-    return d1 - d2;
-});
-    allTasksData = data;
+    console.log("API DATA:", data);
 
-    const undoneTasks = [];
-    const doneTasks = [];
-
-    data.forEach(task => {
-        if (task.submission_id) doneTasks.push(task);
-        else undoneTasks.push(task);
-    });
-
+    // ✅ CLEAR FIRST (VERY IMPORTANT)
     document.getElementById("undoneList").innerHTML = "";
     document.getElementById("doneList").innerHTML = "";
 
-    undoneTasks.forEach(t => renderTask(t, false));
-    doneTasks.forEach(t => renderTask(t, true));
+    data.forEach(task => {
+        renderTask(task, task.submission_id !== null);
+    });
 }
 
 /* ================= RENDER ================= */

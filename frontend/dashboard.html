@@ -234,7 +234,7 @@ button:hover {
             <h3>Create Task</h3>
             <form id="taskForm" class="form-grid">
                 <input type="text" id="title" placeholder="Title" required />
-                <input type="text" id="class" placeholder="Class" required />
+                <select id="class_id"></select>
                 <input type="text" id="subject" placeholder="Subject" required />
                 <select id="priority">
                     <option value="low">Low</option>
@@ -254,7 +254,7 @@ button:hover {
             <form id="studentForm" class="form-grid">
                 <input type="text" id="s_name" placeholder="Name" required />
                 <input type="email" id="s_email" placeholder="Email" required />
-                <input type="text" id="s_class" placeholder="Class" />
+                <select id="s_class"></select>
                 <input type="text" id="s_subject" placeholder="Subject" />
                 <input type="password" id="s_password" placeholder="Password" required />
                 <button type="submit">Create Student</button>
@@ -325,6 +325,51 @@ loadSubmissions = async function () {
     document.getElementById("markedCount").innerText = marked;
     document.getElementById("unmarkedCount").innerText = unmarked;
 };
+
+async function loadClasses() {
+    const res = await fetch("http://localhost:5000/classes", {
+        headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+        }
+    });
+
+    const data = await res.json();
+
+    const select = document.getElementById("class_id");
+    select.innerHTML = "";
+
+    data.forEach(c => {
+        const option = document.createElement("option");
+        option.value = c.id;
+        option.innerText = c.name;
+        select.appendChild(option);
+    });
+}
+
+async function loadStudentClasses() {
+    const res = await fetch("http://localhost:5000/classes", {
+        headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+        }
+    });
+
+    const data = await res.json();
+
+    const select = document.getElementById("s_class");
+    select.innerHTML = "";
+
+    data.forEach(c => {
+        const option = document.createElement("option");
+        option.value = c.id;
+        option.innerText = c.name;
+        select.appendChild(option);
+    });
+}
+
+loadStudentClasses();
+
+// call it when page loads
+loadClasses();
 
 window.onload = function () {
     loadSubmissions();

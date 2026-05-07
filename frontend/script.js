@@ -87,22 +87,25 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const formData = new FormData();
+     const formData = new FormData();
 
-      formData.append("title", document.getElementById("title").value);
-      formData.append("description", document.getElementById("description").value);
-      formData.append("class", document.getElementById("class").value);
-      formData.append("subject", document.getElementById("subject").value);
+formData.append("title", document.getElementById("title").value);
+formData.append("description", document.getElementById("description").value);
 
-      // ⭐ ONLY REQUIRED ADDITION (YOUR REQUEST)
-      formData.append("priority", document.getElementById("priority").value);
-      formData.append("deadline", document.getElementById("deadline").value);
+const classSelect = document.getElementById("class_id");
+const className = classSelect.options[classSelect.selectedIndex].text;
 
-      const fileInput = document.getElementById("file");
-      if (fileInput.files[0]) {
-        formData.append("file", fileInput.files[0]);
-      }
+formData.append("class", className);
 
+formData.append("subject", document.getElementById("subject").value);
+formData.append("priority", document.getElementById("priority").value);
+formData.append("deadline", document.getElementById("deadline").value);
+
+const fileInput = document.getElementById("file");
+
+if (fileInput.files[0]) {
+    formData.append("file", fileInput.files[0]);
+}
       try {
         const res = await fetch(`${API}/tasks`, {
           method: "POST",
@@ -130,45 +133,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ================= CREATE TEACHER =================
 async function createTeacher() {
-  try {
-    const name = document.getElementById("t_name").value.trim();
-    const email = document.getElementById("t_email_reg").value.trim();
-    const password = document.getElementById("t_password_reg").value.trim();
 
-    if (!name || !email || !password) {
-      alert("All fields are required");
-      return;
-    }
+  const name = document.getElementById("t_name").value;
+  const email = document.getElementById("t_email").value;
+  const password = document.getElementById("t_password").value;
 
-    const res = await fetch(`${API}/create-teacher`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ name, email, password })
-    });
+  const res = await fetch(`${API}/create-teacher`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name, email, password })
+  });
 
-    const data = await res.json();
+  const data = await res.json();
 
-    alert(data.msg);
+  alert(data.msg);
 
-    if (data.success) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", "teacher");
-      localStorage.setItem("teacher", JSON.stringify(data.teacher));
-
-      window.location.href = "dashboard.html";
-    }
-
-  } catch (err) {
-    console.error(err);
-    alert("Server error");
+  if (data.success) {
+    document.getElementById("t_name").value = "";
+    document.getElementById("t_email").value = "";
+    document.getElementById("t_password").value = "";
   }
 }
 async function loadSubmissions() {
+
     try {
-        const res = await fetch(`${API}/submissions-view`);
+
+        const res = await fetch(`${API}/submissions-view`, {
+            headers: {
+                Authorization: "Bearer " + localStorage.getItem("token")
+            }
+        });
+
         const data = await res.json();
+
+        console.log("SUBMISSIONS:", data);
 
         const unmarkedContainer = document.getElementById("unmarkedList");
         const markedContainer = document.getElementById("markedList");
@@ -178,121 +178,121 @@ async function loadSubmissions() {
 
         data.forEach(sub => {
 
+            const isMarked =
+                sub.marks !== null &&
+                sub.marks !== undefined;
 
-         console.log("SUBMISSION DEBUG:", sub.id, sub.marks); // ✅ ADD HERE
+            const container = isMarked
+                ? markedContainer
+                : unmarkedContainer;
 
-         const isMarked = sub.marks != null;
+            const div = document.createElement("div");
 
-            const cardHTML = `
-                <div class="task-card">
-                    <h4>${sub.task_title || "No Task Title"}</h4>
-                    <p><b>Student:</b> ${sub.student_name || "Unknown"}</p>
-                    <p><b>Answer:</b> ${sub.answer || "No answer"}</p>
+            div.className = "task-card";
 
-                    ${sub.file_path ? `<p><a href="${API}/uploads/${sub.file_path}" target="_blank">Download File</a></p>` : ""}
+            div.innerHTML = `
+                <h4>${sub.task_title || "No Title"}</h4>
 
-                    ${
-                      !isMarked ? `
-                        <input type="number" id="marks-${sub.id}" placeholder="Marks" />
-                        <input type="text" id="feedback-${sub.id}" placeholder="Feedback" />
-                        <button onclick="gradeSubmission(${sub.id})">Submit Grade</button>
-                      ` : `
-                   <p><b>Marks:</b> ${sub.marks}</p>
-                 <p><b>Feedback:</b> ${sub.feedback || ""}</p>
+                <p><b>Student:</b> ${sub.student_name || "Unknown"}</p>
 
-                  <button onclick="deleteSubmission(${sub.id})" style="background:red; margin-top:10px;">
-                 🗑 Delete
-                 </button>
-                `
-                    }
+                <p><b>Answer:</b> ${sub.answer || ""}</p>
 
-                    <small>${sub.created_at}</small>
-                </div>
+                ${
+                  sub.file_path
+                    ? `
+                    <a href="${API}/uploads/${sub.file_path}" target="_blank">
+                        📎 Download File
+                    </a>
+                  `
+                    : ""
+                }
+
+                ${
+                  !isMarked
+                    ? `
+                    <input
+                        type="number"
+                        id="marks-${sub.id}"
+                        placeholder="Marks"
+                    />
+
+                    <input
+                        type="text"
+                        id="feedback-${sub.id}"
+                        placeholder="Feedback"
+                    />
+
+                    <button onclick="gradeSubmission(${sub.id})">
+                        Mark Work
+                    </button>
+                  `
+                    : `
+                    <p><b>Marks:</b> ${sub.marks}</p>
+
+                    <p><b>Feedback:</b> ${sub.feedback || ""}</p>
+
+                    <p style="color:green;">
+                        ✅ Marked
+                    </p>
+                  `
+                }
+
+                <small>${sub.created_at}</small>
             `;
 
-            if (isMarked) {
-                markedContainer.innerHTML += cardHTML;
-            } else {
-                unmarkedContainer.innerHTML += cardHTML;
-            }
+            container.appendChild(div);
 
         });
 
-        // ✅ empty states
-        if (!unmarkedContainer.innerHTML) {
-            unmarkedContainer.innerHTML = "<p>No unmarked submissions</p>";
-        }
+        // counts
+        document.getElementById("totalSub").innerText =
+            data.length;
 
-        if (!markedContainer.innerHTML) {
-            markedContainer.innerHTML = "<p>No marked submissions yet</p>";
-        }
+        document.getElementById("unmarkedCount").innerText =
+            unmarkedContainer.children.length;
+
+        document.getElementById("markedCount").innerText =
+            markedContainer.children.length;
 
     } catch (err) {
-        console.error("Failed to load submissions", err);
+
+        console.log(err);
+
     }
+
 }
-
-// ================= POPUP =================
-function openPopup() {
-  document.getElementById("teacherPopup").style.display = "block";
-}
-
-function closePopup() {
-  document.getElementById("teacherPopup").style.display = "none";
-}
-
-const studentForm = document.getElementById("studentForm");
-
-if (studentForm) {
-    studentForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const token = localStorage.getItem("token");
-
-        const res = await fetch(`${API}/teacherStudent/create-student`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + token
-            },
-            body: JSON.stringify({
-                name: document.getElementById("s_name").value,
-                email: document.getElementById("s_email").value,
-                class: document.getElementById("s_class").value,
-                subject: document.getElementById("s_subject").value,
-                password: document.getElementById("s_password").value
-            })
-        });
-
-        const data = await res.json();
-
-        alert(data.msg);
-
-        if (data.success) {
-            document.getElementById("studentForm").reset();
-        }
-    });
-}
+  
 async function gradeSubmission(id) {
 
     const marks = document.getElementById(`marks-${id}`).value;
-    const feedback = document.getElementById(`feedback-${id}`).value;
 
-    await fetch(`${API}/grade-submission`, {
+    const feedback =
+        document.getElementById(`feedback-${id}`).value;
+
+    const res = await fetch(`${API}/grade-submission`, {
+
         method: "POST",
+
         headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token")
+            Authorization:
+                "Bearer " + localStorage.getItem("token")
         },
+
         body: JSON.stringify({
             submission_id: id,
             marks,
             feedback
         })
+
     });
 
-    alert("Graded successfully");
+    const data = await res.json();
+
+    alert(data.msg);
+
     loadSubmissions();
+
 }
 
 function showSubmissionSection(type) {
@@ -330,6 +330,8 @@ async function deleteSubmission(id) {
 
 async function showStudents() {
 
+console.log("🔥 showStudents is running");
+
     const section = document.getElementById("studentsSection");
     const list = document.getElementById("studentsList");
 
@@ -360,30 +362,24 @@ async function showStudents() {
 function renderStudents(data) {
 
     const list = document.getElementById("studentsList");
-    list.innerHTML = "";
 
-    if (!data || data.length === 0) {
-        list.innerHTML = "<p>No students found</p>";
-        return;
-    }
+    console.log("RENDERING:", list); // debug
+
+    list.innerHTML = "";
 
     data.forEach(st => {
 
        const card = `
-    <div class="task-card">
-        <h4>${st.name}</h4>
-        <p><b>Email:</b> ${st.email}</p>
-        <p><b>Class:</b> ${st.class || "-"}</p>
-        <p><b>Subject:</b> ${st.subject || "-"}</p>
-
-        <button 
-            onclick="deleteStudent(${st.id})" 
-            style="background:#e74c3c; margin-top:10px;">
-            🗑 Delete
-        </button>
-    </div>
+<div class="task-card">
+    <h4>${st.name}</h4>
+    <p><b>Email:</b> ${st.email}</p>
+    <p><b>Class:</b> ${st.class || "Not assigned"}</p>
+    <p><b>Subject:</b> ${st.subject || "-"}</p>
+    <button onclick="deleteStudent(${st.id})" style="background:#e74c3c;">
+        🗑 Delete
+    </button>
+</div>
 `;
-
         list.innerHTML += card;
     });
 }
@@ -400,7 +396,7 @@ function filterStudents() {
         return (
             (st.name && st.name.toLowerCase().includes(query)) ||
             (st.email && st.email.toLowerCase().includes(query)) ||
-            (st.class && st.class.toLowerCase().includes(query)) ||
+            (st.class_id && String(st.class_id).includes(query))
             (st.subject && st.subject.toLowerCase().includes(query))
         );
     });
@@ -441,7 +437,8 @@ async function deleteStudent(id) {
 }
 
 function showEntities() {
-    document.getElementById("entityOptions").style.display = "block";
+    const box = document.getElementById("entityOptions");
+    box.style.display = box.style.display === "block" ? "none" : "block";
 }
 
 function goStudent() {
@@ -450,4 +447,125 @@ function goStudent() {
 
 function goTeacher() {
     window.location.href = "teacher-login.html";
+}
+
+function goDos() {
+    window.location.href = "dos-login.html";
+}
+
+function openDosLogin() {
+    document.getElementById("dosModal").style.display = "flex";
+}
+
+function closeDosLogin() {
+    document.getElementById("dosModal").style.display = "none";
+}
+
+function openDosRegister() {
+    window.location.href = "dos-register.html";
+}
+
+async function dosLogin() {
+
+  const email = document.getElementById("dos_email").value;
+  const password = document.getElementById("dos_password").value;
+
+  const res = await fetch(`${API}/dos-login`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+ if (data.success) {
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("role", "dos");
+
+  window.location.href = "dos-dashboard.html";
+}
+}
+
+function openClassModal() {
+    document.getElementById("classModal").style.display = "flex";
+}
+
+function closeClassModal() {
+    document.getElementById("classModal").style.display = "none";
+}
+
+async function createClass() {
+
+  const name = document.getElementById("class_name").value;
+  const level = document.getElementById("class_level").value;
+  const description = document.getElementById("class_description").value;
+
+  const res = await fetch(`${API}/dos/create-class`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem("token")
+    },
+    body: JSON.stringify({ name, level, description })
+  });
+
+  const data = await res.json();
+
+  alert(data.msg);
+
+  if (data.success) {
+    closeClassModal();
+    loadStats();
+  }
+}
+async function assignClass(student_id) {
+
+    const class_id = document.getElementById(`class-${student_id}`).value;
+
+    if (!class_id) {
+        alert("Select a class first");
+        return;
+    }
+
+    const res = await fetch(`${API}/dos/assign-class`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token")
+        },
+        body: JSON.stringify({
+            student_id,
+            class_id
+        })
+    });
+
+    const data = await res.json();
+
+    alert(data.msg);
+
+    if (data.success) {
+        showStudents(); // refresh list
+    }
+}
+
+async function unassignStudentClass(studentId) {
+
+  if (!confirm("Remove class from this student?")) return;
+
+  const res = await fetch(`${API}/dos/unassign-student-class`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem("token")
+    },
+    body: JSON.stringify({ student_id: studentId })
+  });
+
+  const data = await res.json();
+
+  alert(data.msg);
+
+  if (data.success) {
+    loadStudents();
+  }
 }

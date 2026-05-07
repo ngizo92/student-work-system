@@ -29,7 +29,7 @@
   </button>
 
   <!-- ROLE OPTIONS (hidden initially) -->
-  <div id="entityOptions" class="entity-options">
+  <div id="entityOptions" class="entity-options" style="display:none;">
 
     <button class="role-btn student" onclick="goStudent()">
       👨‍🎓 Student
@@ -39,21 +39,18 @@
       👨‍🏫 Teacher
     </button>
 
+   <button class="role-btn dos" onclick="openDosLogin()">
+  👑 DOS
+</button>
+
   </div>
 
-</div>
-
-
-  <!-- STUDENT LOGIN -->
- 
-
-  <!-- TEACHER LOGIN -->
- 
+<div>
 
   <!-- CREATE TEACHER -->
-  <button class="primary" onclick="openPopup()">
-    Create Teacher Account
-  </button>
+  <button class="primary" onclick="openDosRegister()">
+  👑 Create DOS Account
+</button>
 
 </div>
 
@@ -73,6 +70,25 @@
   </div>
 </div>
 
+
+
+<!-- ================= DOS LOGIN MODAL ================= -->
+<div id="dosModal" class="modal">
+
+  <div class="modal-box">
+
+    <h2>👑 DOS Login</h2>
+    <p class="subtitle">Access administrative dashboard</p>
+
+    <input id="dos_email" type="email" placeholder="Email">
+    <input id="dos_password" type="password" placeholder="Password">
+
+    <button onclick="dosLogin()">Login</button>
+    <button class="close-btn" onclick="closeDosLogin()">Cancel</button>
+
+  </div>
+
+</div>
 <script src="script.js"></script>
 </body>
 </html>

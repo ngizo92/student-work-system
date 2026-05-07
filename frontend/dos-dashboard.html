@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>DOS Dashboard</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    background: #0f172a;
+    color: white;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    background: linear-gradient(180deg, #1e3c72, #2a5298);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.sidebar button {
+    margin: 8px 0;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    transition: 0.3s;
+}
+
+.sidebar button:hover {
+    background: white;
+    color: #1e3c72;
+}
+
+/* ===== MAIN ===== */
+.main {
+    flex: 1;
+    padding: 25px;
+}
+
+/* ===== TOP BAR ===== */
+.topbar {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+}
+
+/* ===== CARDS ===== */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+    padding: 20px;
+    border-radius: 16px;
+    transition: 0.3s;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    background: rgba(255,255,255,0.12);
+}
+
+/* ===== ACTION PANEL ===== */
+.panel {
+    margin-top: 20px;
+    background: rgba(255,255,255,0.08);
+    padding: 20px;
+    border-radius: 16px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+}
+
+button.primary {
+    background: #2a5298;
+    color: white;
+    padding: 12px;
+    width: 100%;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button.primary:hover {
+    background: #1e3c72;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(10px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+.card, .panel {
+    animation: fadeIn 0.4s ease;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.modal-box {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 15px;
+    width: 350px;
+    color: white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.modal-box h2, .modal-box h3 {
+    margin-bottom: 15px;
+}
+
+.modal-box select,
+.modal-box input,
+.modal-box textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+}
+
+.modal-box button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.modal-box button:first-of-type {
+    background: #2a5298;
+    color: white;
+}
+
+.modal-box .close-btn {
+    background: #ef4444;
+    color: white;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>👑 DOS PANEL</h2>
+
+    <button onclick="showOverview()">📊 Overview</button>
+ <button onclick="openView('teachers')">👨‍🏫 Teachers</button>
+<button onclick="openView('students')">👨‍🎓 Students</button>
+    <button onclick="showSection('create')">➕ Create Teacher</button>
+   <button onclick="openClassModal()">🏫 Create Class</button>
+    <button onclick="logout()">🚪 Logout</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <div class="topbar">
+        <h2>Welcome, Director of Studies 👑</h2>
+        <p>Manage teachers, students, and system activity</p>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div id="overview" class="grid">
+       <div class="card" onclick="openView('teachers')">👨‍🏫 Teachers <h2 id="tCount">0</h2></div>
+<div class="card" onclick="openView('students')">👨‍🎓 Students <h2 id="sCount">0</h2></div>
+<div class="card" onclick="openView('classes')">🏫 Classes <h2 id="classCount">0</h2></div>
+<div class="card" onclick="openView('tasks')">📚 Tasks <h2 id="taskCount">0</h2></div>
+<div class="card" onclick="openView('submissions')">📈 Submissions <h2 id="subCount">0</h2></div>
+        
+    </div>
+
+<div id="dataView" class="panel" style="display:none;">
+    <h3 id="viewTitle"></h3>
+  <!-- ONE SEARCH BOX ONLY -->
+<input id="searchBox" placeholder="🔍 Search..." oninput="handleSearch()" />
+
+    <div id="viewContent"></div>
+</div>
+
+    <!-- CREATE TEACHER -->
+    <div id="create" class="panel" style="display:none;">
+        <h3>Create Teacher</h3>
+
+        <input id="t_name" placeholder="Name">
+        <input id="t_email" placeholder="Email">
+        <input id="t_password" type="password" placeholder="Password">
+
+        <button class="primary" onclick="createTeacher()">Create Teacher</button>
+    </div>
+
+</div>
+
+<div id="classModal" class="modal">
+
+  <div class="modal-box">
+
+    <h2>🏫 Create Class</h2>
+
+    <input id="class_name" placeholder="Class Name (e.g. S3A)">
+    <input id="class_level" placeholder="Level (e.g. Senior 3)">
+    <textarea id="class_description" placeholder="Description"></textarea>
+
+    <button onclick="createClass()">Create Class</button>
+    <button class="close-btn" onclick="closeClassModal()">Cancel</button>
+
+  </div>
+
+</div>
+
+<div id="classes" class="panel" style="display:none;">
+    <h3>All Classes</h3>
+    <div id="classList"></div>
+</div>
+
+
+
+ 
+
+
+
+<div id="assignStudentModal" class="modal">
+  <div class="modal-box">
+
+    <h3>Assign Class to Student</h3>
+
+    <select id="studentClassSelect"></select>
+
+    <button onclick="assignStudentClass()">Assign</button>
+    <button class="close-btn" onclick="closeAssignStudent()">Cancel</button>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+
+<script>
+
+let viewMode = "classes"; // classes | students
+let currentClassId = null;
+let currentViewData = [];
+
+let selectedTeacherId = null;
+function handleSearch() {
+    const value = document.getElementById("searchBox").value.toLowerCase();
+
+    const filtered = currentViewData.filter(item =>
+        JSON.stringify(item).toLowerCase().includes(value)
+    );
+
+    if (viewMode === "students") {
+        renderStudents(filtered);
+    }
+
+    else if (viewMode === "classes") {
+        const box = document.getElementById("viewContent");
+        box.innerHTML = "";
+
+        filtered.forEach((c, index) => {
+            box.innerHTML += `
+                <div class="card" onclick="viewClassStudents(${c.id}, '${c.name}')">
+                    <h4>${index + 1}. 🏫 ${c.name}</h4>
+                    <p>${c.level}</p>
+                </div>
+            `;
+        });
+    }
+
+    else {
+        // fallback for teachers/tasks/submissions
+        renderView(filtered, viewMode);
+    }
+}
+/* ===== NAV ===== */
+function showSection(id) {
+
+    // hide everything first
+    document.querySelectorAll('.panel').forEach(e => {
+        e.style.display = "none";
+    });
+
+    document.querySelectorAll('.grid').forEach(e => {
+        e.style.display = "none";
+    });
+
+    const el = document.getElementById(id);
+
+    if (!el) {
+        console.warn("Section not found:", id);
+        return;
+    }
+
+    // show correctly
+    if (el.classList.contains("grid")) {
+        el.style.display = "grid";
+    } else {
+        el.style.display = "block";
+    }
+}
+/* ===== CREATE TEACHER ===== */
+
+
+/* ===== LOAD STATS ===== */
+async function loadStats() {
+
+    const token = localStorage.getItem("token");
+
+    const headers = {
+        Authorization: "Bearer " + token
+    };
+
+    try {
+
+        const [teachers, students, classes, tasks, subs] = await Promise.all([
+            fetch(`${API}/teachers`, { headers }).then(r => r.json()),
+            fetch(`${API}/students`, { headers }).then(r => r.json()),
+            fetch(`${API}/classes`, { headers }).then(r => r.json()),
+            fetch(`${API}/assignments`).then(r => r.json()),
+            fetch(`${API}/submissions-view`).then(r => r.json())
+        ]);
+
+        // ✅ MOVE LOG HERE (AFTER DECLARATION)
+        console.log("STATS:", teachers, students, classes, tasks, subs);
+
+        document.getElementById("tCount").innerText = teachers.length;
+        document.getElementById("sCount").innerText = students.length;
+        document.getElementById("classCount").innerText = classes.length;
+        document.getElementById("taskCount").innerText = tasks.length;
+        document.getElementById("subCount").innerText = subs.length;
+
+    } catch (err) {
+        console.error("Stats error:", err);
+    }
+}
+function loadClasses() {
+
+    fetch(`${API}/classes`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+    })
+    .then(r => r.json())
+    .then(data => {
+
+        currentViewData = data;
+
+        const box = document.getElementById("viewContent");
+        box.innerHTML = "";
+
+        data.forEach((c, index) => {
+            box.innerHTML += `
+                <div class="card" onclick="viewClassStudents(${c.id}, '${c.name}')">
+                    <h4>${index + 1}. 🏫 ${c.name}</h4>
+                    <p>${c.level}</p>
+                </div>
+            `;
+        });
+    });
+}
+
+async function viewClassStudents(classId, className) {
+
+    currentClassId = classId;
+    viewMode = "students";
+
+    document.getElementById("viewTitle").innerText =
+        `👨‍🎓 Students in ${className}`;
+
+    document.getElementById("searchBox").placeholder =
+        "🔍 Search students in class...";
+
+    const res = await fetch(`${API}/students`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+    });
+
+    let data = await res.json();
+
+    const students = data.filter(s => s.class_id == classId);
+
+    currentViewData = students;
+
+    renderStudents(students);
+}
+
+function openView(type) {
+
+    document.getElementById("overview").style.display = "none";
+    document.getElementById("create").style.display = "none";
+    document.getElementById("dataView").style.display = "block";
+
+    const title = document.getElementById("viewTitle");
+
+    currentClassId = null;
+    viewMode = type;
+
+    // RESET SEARCH BOX
+    document.getElementById("searchBox").value = "";
+
+    if (type === "classes") {
+        title.innerText = "All Classes";
+        document.getElementById("searchBox").placeholder = "🔍 Search classes...";
+        loadClasses();
+    }
+
+    if (type === "students") {
+        title.innerText = "All Students";
+        document.getElementById("searchBox").placeholder = "🔍 Search students...";
+        fetchStudentsSafe();
+    }
+
+    if (type === "teachers") {
+        title.innerText = "All Teachers";
+        document.getElementById("searchBox").placeholder = "🔍 Search teachers...";
+        loadTeachers();
+    }
+
+    if (type === "tasks") {
+        title.innerText = "All Tasks";
+        document.getElementById("searchBox").placeholder = "🔍 Search tasks...";
+        loadTasks();
+    }
+
+    if (type === "submissions") {
+        title.innerText = "All Submissions";
+        document.getElementById("searchBox").placeholder = "🔍 Search submissions...";
+        loadSubmissionsView();
+    }
+}
+
+async function loadTeachers() {
+
+    const res = await fetch(`${API}/dos/teachers-with-classes`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+    });
+
+    const data = await res.json();
+
+    const box = document.getElementById("viewContent");
+    box.innerHTML = "";
+
+    // 🔥 group teachers
+    const map = {};
+
+    data.forEach(row => {
+
+        if (!map[row.teacher_id]) {
+            map[row.teacher_id] = {
+                id: row.teacher_id,
+                name: row.name,
+                email: row.email,
+                classes: []
+            };
+        }
+
+        if (row.class_name) {
+            map[row.teacher_id].classes.push(row.class_name);
+        }
+    });
+
+    Object.values(map).forEach(t => {
+
+        box.innerHTML += `
+            <div class="card">
+             <h4>${t.name}</h4>
+<p>${t.email}</p>
+
+<p><b>Classes:</b> ${t.classes || "None"}</p>
+
+<button onclick="openAssign(${t.id})">➕ Assign Class</button>
+
+<button onclick="openUnassign(${t.id})" style="background:red; margin-top:5px;">
+🗑 Unassign
+</button>
+            </div>
+        `;
+    });
+}
+
+// ================= FIX STEP 2: SAFE STUDENTS FETCH =================
+async function fetchStudentsSafe() {
+
+    try {
+
+        const res = await fetch(`${API}/students`, {
+            headers: {
+                Authorization: "Bearer " + localStorage.getItem("token")
+            }
+        });
+
+        const text = await res.text();
+
+        let data;
+
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error("NOT JSON RESPONSE:", text);
+            document.getElementById("viewContent").innerHTML =
+                `<p style="color:red;">Error loading students</p>`;
+            return;
+        }
+
+        console.log("STUDENTS SAFE:", data);
+
+        loadStudents(data);
+
+    } catch (err) {
+        console.error("Fetch failed:", err);
+    }
+}
+
+async function loadStudents() {
+
+    const res = await fetch(`${API}/students`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+    });
+
+    const text = await res.text();
+
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch (e) {
+        console.error("Invalid JSON:", text);
+        document.getElementById("viewContent").innerHTML =
+            `<p style="color:red;">Error loading students</p>`;
+        return;
+    }
+
+    console.log("DEBUG STUDENTS RESPONSE:", data);
+
+    const box = document.getElementById("viewContent");
+    box.innerHTML = "";
+
+    if (!Array.isArray(data)) {
+        box.innerHTML = `<p style="color:red;">${data.msg || "Error loading students"}</p>`;
+        return;
+    }
+
+    // ===============================
+    // ✅ NEW FEATURE (ADD ONLY)
+    // ===============================
+    
+
+    data.forEach((st, index) => {
+        box.innerHTML += `
+            <div class="card">
+                <h4>${index + 1}. ${st.name}</h4>
+                <p>${st.email}</p>
+                <p><b>Class:</b> ${st.class || "Not assigned"}</p>
+
+                <button onclick="openAssignStudent(${st.id})">
+                    ➕ Assign Class
+                </button>
+
+                <button onclick="unassignStudentClass(${st.id})" 
+                        style="background:red; margin-top:5px;">
+                    🗑 Unassign Class
+                </button>
+            </div>
+        `;
+    });
+}
+
+async function loadTasks() {
+
+    const res = await fetch(`${API}/assignments`);
+    const data = await res.json();
+
+    const box = document.getElementById("viewContent");
+    box.innerHTML = "";
+
+    data.forEach(task => {
+        box.innerHTML += `
+            <div class="card">
+                <h4>${task.title}</h4>
+                <p>${task.class}</p>
+                <p>${task.subject}</p>
+                <p><b>Deadline:</b> ${task.deadline || "None"}</p>
+            </div>
+        `;
+    });
+}
+
+async function loadSubmissionsView() {
+
+    const res = await fetch(`${API}/submissions-view`);
+    const data = await res.json();
+
+    const box = document.getElementById("viewContent");
+    box.innerHTML = "";
+
+    data.forEach(sub => {
+        box.innerHTML += `
+            <div class="card">
+                <h4>${sub.task_title}</h4>
+                <p><b>Student:</b> ${sub.student_name}</p>
+                <p>${sub.answer || ""}</p>
+                <p><b>Marks:</b> ${sub.marks ?? "Not graded"}</p>
+            </div>
+        `;
+    });
+}
+
+
+
+async function openAssign(teacherId) {
+
+  selectedTeacherId = teacherId;
+
+  const res = await fetch(`${API}/classes`, {
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const classes = await res.json();
+
+  const select = document.getElementById("classSelect");
+  select.innerHTML = "";
+
+  classes.forEach(c => {
+    select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+  });
+
+  document.getElementById("assignModal").style.display = "flex";
+}
+
+    
+
+async function assignClass(classId) {
+
+    await fetch(`${API}/dos/assign-class`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token")
+        },
+        body: JSON.stringify({
+            teacher_id: selectedTeacherId,
+            class_id: classId
+        })
+    });
+
+    alert("Class assigned!");
+   closeAssign();
+}
+
+function closeAssign() {
+    document.getElementById("assignModal").style.display = "none";
+}
+
+async function deleteTeacher(id) {
+
+    if (!confirm("Delete this teacher?")) return;
+
+    await fetch(`${API}/dos/teachers/${id}`, {
+        method: "DELETE",
+        headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+        }
+    });
+
+    alert("Deleted");
+    loadTeachers();
+}
+
+function closeAssign() {
+  document.getElementById("assignModal").style.display = "none";
+}
+
+async function assignClass() {
+
+  const class_id = document.getElementById("classSelect").value;
+
+  const res = await fetch(`${API}/dos/assign-class`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem("token")
+    },
+    body: JSON.stringify({
+      teacher_id: selectedTeacherId,
+      class_id
+    })
+  });
+
+  const data = await res.json();
+
+  alert(data.msg);
+
+  if (data.success) {
+    closeAssign();
+    loadTeachers();
+  }
+}
+
+async function openUnassign(id) {
+
+  selectedTeacherId = id;
+
+  const res = await fetch(`${API}/teachers`, {
+    headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+  });
+
+  const teachers = await res.json();
+
+  const teacher = teachers.find(t => t.id === id);
+
+  const select = document.getElementById("unassignSelect");
+  select.innerHTML = "";
+
+  if (!teacher.class_ids) {
+    alert("No classes assigned");
+    return;
+  }
+
+  const ids = teacher.class_ids.split(",");
+  const names = teacher.classes.split(",");
+
+  ids.forEach((cid, i) => {
+    select.innerHTML += `<option value="${cid}">${names[i]}</option>`;
+  });
+
+  document.getElementById("unassignModal").style.display = "flex";
+}
+
+function closeUnassign() {
+  document.getElementById("unassignModal").style.display = "none";
+}
+
+async function unassignClass() {
+
+  const class_id = document.getElementById("unassignSelect").value;
+
+  const res = await fetch(`${API}/dos/unassign-class`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem("token")
+    },
+    body: JSON.stringify({
+      teacher_id: selectedTeacherId,
+      class_id
+    })
+  });
+
+  const data = await res.json();
+
+  alert(data.msg);
+
+  if (data.success) {
+    closeUnassign();
+    loadTeachers();
+  }
+}
+
+let selectedStudentId = null;
+
+async function openAssignStudent(id) {
+
+  selectedStudentId = id;
+
+  const res = await fetch(`${API}/classes`, {
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("token")
+    }
+  });
+
+  const classes = await res.json();
+
+  const select = document.getElementById("studentClassSelect");
+  select.innerHTML = "";
+
+  classes.forEach(c => {
+    select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+  });
+
+  document.getElementById("assignStudentModal").style.display = "flex";
+}
+
+function closeAssignStudent() {
+  document.getElementById("assignStudentModal").style.display = "none";
+}
+
+async function assignStudentClass() {
+
+  const class_id = document.getElementById("studentClassSelect").value;
+
+  const res = await fetch(`${API}/dos/assign-student-class`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem("token")
+    },
+    body: JSON.stringify({
+      student_id: selectedStudentId,
+      class_id
+    })
+  });
+
+  const data = await res.json();
+
+  alert(data.msg);
+
+  if (data.success) {
+    closeAssignStudent();
+    loadStudents();
+  }
+}
+
+function showOverview() {
+
+    // hide all panels
+    document.getElementById("dataView").style.display = "none";
+    document.getElementById("create").style.display = "none";
+
+    // show overview
+    document.getElementById("overview").style.display = "grid";
+}
+
+/* ===== LOGOUT ===== */
+function logout() {
+    localStorage.clear();
+    window.location.href = "index.html";
+}
+
+
+function renderView(data, type) {
+    const box = document.getElementById("viewContent");
+    box.innerHTML = "";
+
+   
+    if (type === "classes") {
+        data.forEach((c, index) => {
+            box.innerHTML += `
+                <div class="card" onclick="loadStudentsByClass(${c.id}, '${c.name}')">
+                    <h4>${index + 1}. ${c.name}</h4>
+                    <p>${c.level}</p>
+                </div>
+            `;
+        });
+    }
+}
+
+function renderStudents(data) {
+
+    const box = document.getElementById("viewContent");
+    box.innerHTML = "";
+
+    if (data.length === 0) {
+        box.innerHTML = `<p>No students in this class</p>`;
+        return;
+    }
+
+    data.forEach((s, index) => {
+        box.innerHTML += `
+            <div class="card">
+                <h4>${index + 1}. ${s.name}</h4>
+                <p>${s.email}</p>
+                <p><b>Class:</b> ${s.class_name || "Not assigned"}</p>
+            </div>
+        `;
+    });
+}
+
+async function loadStudentsByClass(classId, className) {
+
+    document.getElementById("viewTitle").innerText =
+        "Students in " + className;
+
+    const res = await fetch(`${API}/students`, {
+        headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+    });
+
+    let data = await res.json();
+
+    data = data.filter(s => s.class_id == classId);
+
+    currentViewData = data;
+    currentViewType = "students";
+
+    renderView(data, "students");
+}
+
+
+
+
+loadStats();
+document.getElementById("overview").style.display = "grid";
+
+</script>
+
+<div id="assignModal" class="modal" style="display:none;">
+  <div class="modal-box">
+    <h3>Assign Class</h3>
+
+    <select id="classSelect"></select>
+
+    <button onclick="assignClass()">Assign</button>
+    <button onclick="closeAssign()">Cancel</button>
+  </div>
+</div>
+
+<div id="unassignModal" class="modal" style="display:none;">
+  <div class="modal-box">
+    <h3>Unassign Class</h3>
+
+    <select id="unassignSelect"></select>
+
+    <button onclick="unassignClass()">Unassign</button>
+    <button onclick="closeUnassign()">Cancel</button>
+  </div>
+</div>
+
+</body>
+</html>

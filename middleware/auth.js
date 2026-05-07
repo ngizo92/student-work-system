@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
 
-module.exports = function (req, res, next) {
+const SECRET = "secretkey";
+
+// ================= AUTH MIDDLEWARE =================
+function auth(req, res, next) {
   const token = req.header("Authorization");
 
   if (!token) {
@@ -8,12 +11,23 @@ module.exports = function (req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token.replace("Bearer ", ""), "secretkey");
+    const decoded = jwt.verify(token.replace("Bearer ", ""), SECRET);
 
-    req.user = decoded; // 👈 THIS FIXES YOUR ERROR
-
+    req.user = decoded; // user data inside token
     next();
   } catch (err) {
-    res.status(401).json({ message: "Invalid token" });
+    return res.status(401).json({ message: "Invalid token" });
   }
-};
+}
+
+// ================= ROLE CHECK MIDDLEWARE =================
+function requireRole(role) {
+  return (req, res, next) => {
+    if (!req.user || req.user.role !== role) {
+      return res.status(403).json({ message: "Forbidden: insufficient rights" });
+    }
+    next();
+  };
+}
+
+module.exports = { auth, requireRole };
