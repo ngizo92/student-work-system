@@ -1,94 +1,478 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>STUDENT-WORK-SYSTEM</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Student Work System</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Poppins',sans-serif;
+    min-height:100vh;
+    overflow:hidden;
+    position:relative;
+    color:white;
+
+    /* AMAZING BACKGROUND */
+    background:
+        linear-gradient(rgba(7,12,25,0.75), rgba(7,12,25,0.82)),
+        url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop');
+    
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* ===== FLOATING GLOW ===== */
+body::before{
+    content:"";
+    position:absolute;
+    width:500px;
+    height:500px;
+    background:#2563eb;
+    filter:blur(180px);
+    opacity:0.25;
+    top:-120px;
+    left:-100px;
+}
+
+body::after{
+    content:"";
+    position:absolute;
+    width:400px;
+    height:400px;
+    background:#7c3aed;
+    filter:blur(180px);
+    opacity:0.25;
+    bottom:-100px;
+    right:-80px;
+}
+
+/* ===== MAIN CONTAINER ===== */
+.container{
+    position:relative;
+    z-index:2;
+
+    width:90%;
+    max-width:1200px;
+
+    display:grid;
+    grid-template-columns:1.2fr 0.8fr;
+    gap:40px;
+    align-items:center;
+}
+
+/* ===== LEFT SIDE ===== */
+.hero{
+    animation:fadeUp 1s ease;
+}
+
+.hero img{
+    width:110px;
+    margin-bottom:25px;
+    filter:drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+}
+
+.hero h1{
+    font-size:4rem;
+    line-height:1.1;
+    margin-bottom:20px;
+    font-weight:700;
+
+    background:linear-gradient(to right,#ffffff,#93c5fd);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.hero p{
+    font-size:1.1rem;
+    line-height:1.9;
+    max-width:650px;
+    color:rgba(255,255,255,0.82);
+}
+
+/* ===== RIGHT CARD ===== */
+.entity-container{
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.12);
+
+    backdrop-filter:blur(18px);
+
+    border-radius:28px;
+
+    padding:40px;
+
+    box-shadow:
+        0 20px 40px rgba(0,0,0,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+
+    animation:fadeUp 1.2s ease;
+}
+
+/* ===== TITLE ===== */
+.panel-title{
+    font-size:2rem;
+    margin-bottom:10px;
+    font-weight:600;
+}
+
+.panel-sub{
+    color:rgba(255,255,255,0.72);
+    margin-bottom:35px;
+    line-height:1.7;
+}
+
+/* ===== BUTTONS ===== */
+.choose-btn{
+    width:100%;
+    padding:18px;
+    border:none;
+    border-radius:16px;
+
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+
+    color:white;
+    font-size:1rem;
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:0.35s;
+}
+
+.choose-btn:hover{
+    transform:translateY(-3px);
+    box-shadow:0 15px 30px rgba(37,99,235,0.4);
+}
+
+/* ===== ROLE BUTTONS ===== */
+.entity-options{
+    margin-top:25px;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+.role-btn{
+    width:100%;
+    padding:16px;
+    border:none;
+    border-radius:16px;
+
+    font-size:1rem;
+    font-weight:500;
+
+    cursor:pointer;
+    transition:0.3s;
+
+    color:white;
+}
+
+.role-btn:hover{
+    transform:translateX(5px) scale(1.02);
+}
+
+/* COLORS */
+.student{
+    background:linear-gradient(135deg,#0ea5e9,#0284c7);
+}
+
+.teacher{
+    background:linear-gradient(135deg,#10b981,#059669);
+}
+
+.dos{
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+}
+
+/* ===== CREATE DOS ===== */
+.primary{
+    margin-top:25px;
+    width:100%;
+    padding:16px;
+
+    border:none;
+    border-radius:16px;
+
+    background:white;
+    color:#111827;
+
+    font-weight:600;
+    font-size:1rem;
+
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.primary:hover{
+    transform:translateY(-3px);
+    background:#f3f4f6;
+}
+
+/* ===== MODAL ===== */
+.modal{
+    position:fixed;
+    inset:0;
+
+    background:rgba(0,0,0,0.7);
+
+    display:none;
+    justify-content:center;
+    align-items:center;
+
+    z-index:999;
+}
+
+.modal-box{
+    width:90%;
+    max-width:420px;
+
+    background:#111827;
+
+    border:1px solid rgba(255,255,255,0.1);
+
+    padding:35px;
+    border-radius:24px;
+
+    animation:pop 0.3s ease;
+}
+
+.modal-box h2{
+    margin-bottom:10px;
+}
+
+.subtitle{
+    color:#9ca3af;
+    margin-bottom:25px;
+}
+
+.modal-box input{
+    width:100%;
+    padding:15px;
+
+    margin:10px 0;
+
+    border:none;
+    border-radius:14px;
+
+    background:#1f2937;
+    color:white;
+    font-size:1rem;
+}
+
+.modal-box input:focus{
+    outline:2px solid #2563eb;
+}
+
+.modal-box button{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:14px;
+
+    margin-top:15px;
+
+    font-weight:600;
+    cursor:pointer;
+}
+
+.modal-box button:first-of-type{
+    background:#2563eb;
+    color:white;
+}
+
+.close-btn{
+    background:#ef4444;
+    color:white;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp{
+    from{
+        opacity:0;
+        transform:translateY(40px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+@keyframes pop{
+    from{
+        transform:scale(0.8);
+        opacity:0;
+    }
+    to{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+/* ===== MOBILE ===== */
+@media(max-width:950px){
+
+    body{
+        overflow:auto;
+        padding:40px 0;
+    }
+
+    .container{
+        grid-template-columns:1fr;
+        text-align:center;
+    }
+
+    .hero p{
+        margin:auto;
+    }
+
+    .hero h1{
+        font-size:3rem;
+    }
+}
+
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-<div class="hero">
+    <!-- LEFT -->
+    <div class="hero">
 
-  <img src="images/sws-logo.png" alt="logo">
+        <img src="images/sws-logo.png" alt="logo">
 
-  <h1>STUDENT-WORK-SYSTEM</h1>
+        <h1>STUDENT<br>WORK SYSTEM</h1>
 
-  <p>
-    Organized, efficient, reliable system for managing student tasks, assignments, schedules, collaboration, progress tracking, productivity, learning support, deadlines, and academic workflow management.
-  </p>
+        <p>
+            A modern intelligent platform for managing assignments,
+            student progress, collaboration, academic workflow,
+            teacher productivity, class organization, and learning
+            performance in one beautiful environment.
+        </p>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="entity-container">
+
+        <h2 class="panel-title">
+            Welcome 👋
+        </h2>
+
+        <p class="panel-sub">
+            Select your role to continue into the platform.
+        </p>
+
+        <!-- MAIN BUTTON -->
+        <button class="choose-btn" onclick="showEntities()">
+            Choose an Entity
+        </button>
+
+        <!-- ROLES -->
+        <div id="entityOptions" class="entity-options" style="display:none;">
+
+            <button class="role-btn student" onclick="goStudent()">
+                👨‍🎓 Student Portal
+            </button>
+
+            <button class="role-btn teacher" onclick="goTeacher()">
+                👨‍🏫 Teacher Portal
+            </button>
+
+            <button class="role-btn dos" onclick="openDosLogin()">
+                👑 DOS Administration
+            </button>
+
+        </div>
+
+        <!-- DOS REGISTER -->
+        <button class="primary" onclick="openDosRegister()">
+            ✨ Create DOS Account
+        </button>
+
+    </div>
 
 </div>
 
-<!-- CHOOSE ENTITY BUTTON -->
-<div class="entity-container">
-
-  <button class="choose-btn" onclick="showEntities()">
-    Choose an Entity
-  </button>
-
-  <!-- ROLE OPTIONS (hidden initially) -->
-  <div id="entityOptions" class="entity-options" style="display:none;">
-
-    <button class="role-btn student" onclick="goStudent()">
-      👨‍🎓 Student
-    </button>
-
-    <button class="role-btn teacher" onclick="goTeacher()">
-      👨‍🏫 Teacher
-    </button>
-
-   <button class="role-btn dos" onclick="openDosLogin()">
-  👑 DOS
-</button>
-
-  </div>
-
-<div>
-
-  <!-- CREATE TEACHER -->
-  <button class="primary" onclick="openDosRegister()">
-  👑 Create DOS Account
-</button>
-
-</div>
-
-<!-- POPUP -->
-<div id="teacherPopup" class="popup">
-  <div class="popup-box">
-
-    <h2>Create Teacher Account</h2>
-
-    <input id="t_name" placeholder="Name">
-    <input id="t_email_reg" placeholder="Email">
-    <input id="t_password_reg" type="password" placeholder="Password">
-
-    <button onclick="createTeacher()">Create</button>
-    <button onclick="closePopup()">Close</button>
-
-  </div>
-</div>
-
-
-
-<!-- ================= DOS LOGIN MODAL ================= -->
+<!-- DOS LOGIN MODAL -->
 <div id="dosModal" class="modal">
 
-  <div class="modal-box">
+    <div class="modal-box">
 
-    <h2>👑 DOS Login</h2>
-    <p class="subtitle">Access administrative dashboard</p>
+        <h2>👑 DOS Login</h2>
 
-    <input id="dos_email" type="email" placeholder="Email">
-    <input id="dos_password" type="password" placeholder="Password">
+        <p class="subtitle">
+            Access the Director of Studies dashboard
+        </p>
 
-    <button onclick="dosLogin()">Login</button>
-    <button class="close-btn" onclick="closeDosLogin()">Cancel</button>
+        <input id="dos_email" type="email" placeholder="Email">
 
-  </div>
+        <input id="dos_password" type="password" placeholder="Password">
+
+        <button onclick="dosLogin()">
+            Login
+        </button>
+
+        <button class="close-btn" onclick="closeDosLogin()">
+            Cancel
+        </button>
+
+    </div>
 
 </div>
+
+<script>
+
+function showEntities(){
+
+    const box = document.getElementById("entityOptions");
+
+    if(box.style.display === "none"){
+        box.style.display = "flex";
+    }else{
+        box.style.display = "none";
+    }
+}
+
+function goStudent(){
+    window.location.href = "student-login.html";
+}
+
+function goTeacher(){
+    window.location.href = "teacher-login.html";
+}
+
+function openDosLogin(){
+    document.getElementById("dosModal").style.display = "flex";
+}
+
+function closeDosLogin(){
+    document.getElementById("dosModal").style.display = "none";
+}
+
+function openDosRegister(){
+    window.location.href = "dos-register.html";
+}
+
+</script>
+
 <script src="script.js"></script>
+
 </body>
 </html>
